@@ -3,6 +3,7 @@
 pub mod ecc;
 pub mod keyed_hash;
 pub mod rsa;
+pub mod mldsa;
 
 use crate::{
     attributes::ObjectAttributes,
@@ -171,6 +172,26 @@ impl PublicBuilder {
     /// The unique identifier is a ecc point.
     pub fn with_ecc_unique_identifier(mut self, ecc_unique_identifier: EccPoint) -> Self {
         self.ecc_unique_identifier = Some(ecc_unique_identifier);
+        self
+    }
+
+    /// Adds the MLDSA parameters for the [Public] structure
+    /// to the builder.
+    ///
+    /// # Details
+    /// This is required if the public algorithm is set to
+    /// [Mldsa][]
+    pub const fn with_mldsa_parameters(mut self/*, mldsa_parameters: PublicMldsaParameters*/) -> Self{
+        self
+    }
+
+    /// Adds the MLDSA parameters for the [Public] structure
+    /// to the builder.
+    ///
+    /// # Details
+    /// This is required if the public algorithm is set to
+    /// [Mldsa][]
+    pub fn with_mldsa_unique_identifier(mut self/*, mldsa_unique_identifier: PublicKeyMldsa*/) -> Self{
         self
     }
 

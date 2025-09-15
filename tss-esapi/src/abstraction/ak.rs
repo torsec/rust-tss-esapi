@@ -64,7 +64,10 @@ fn create_ak_public<IKC: IntoKeyCustomization>(
     sign_alg: SignatureSchemeAlgorithm,
     key_customization: IKC,
 ) -> Result<Public> {
+    println!("I am in create_ak_public\n");
     let key_customization = key_customization.into_key_customization();
+
+    println!("I am after key customization\n");
 
     let obj_attrs_builder = ObjectAttributesBuilder::new()
         .with_restricted(true)
@@ -122,8 +125,16 @@ fn create_ak_public<IKC: IntoKeyCustomization>(
                     .build()?,
             )
             .with_ecc_unique_identifier(EccPoint::default()),
+        AsymmetricAlgorithmSelection::Mldsa(key_bytes) => PublicBuilder::new()
+            .with_public_algorithm(PublicAlgorithm::Mldsa)
+            .with_name_hashing_algorithm(hash_alg)
+            .with_object_attributes(obj_attrs)
+            .with_mldsa_parameters(
+            )
+            .with_mldsa_unique_identifier()
     };
 
+    println!("I am HERE\n");
     let key_builder = if let Some(ref k) = key_customization {
         k.template(key_builder)
     } else {
@@ -278,9 +289,12 @@ pub fn create_ak_2<IKC: IntoKeyCustomization>(
     ak_auth_value: Option<Auth>,
     key_customization: IKC,
 ) -> Result<CreateKeyResult> {
+    println!("I am HERE Attestation Key\n");
     let ak_pub = create_ak_public(key_alg, hash_alg, sign_alg, key_customization)?;
+    println!("I am HERE\n");
     let (parent_hash_alg, parent_symmetric, policy_digests) = session_config(context, parent)?;
 
+    println!("I am HERE\n");
     let policy_auth_session = context
         .start_auth_session(
             None,

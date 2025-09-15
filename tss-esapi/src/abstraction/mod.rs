@@ -13,7 +13,7 @@ use std::convert::TryFrom;
 
 use crate::{
     attributes::ObjectAttributesBuilder,
-    interface_types::{algorithm::AsymmetricAlgorithm, ecc::EccCurve, key_bits::RsaKeyBits},
+    interface_types::{algorithm::AsymmetricAlgorithm, ecc::EccCurve, key_bits::RsaKeyBits, mldsa::Mldsa},
     structures::PublicBuilder,
     Error, WrapperErrorKind,
 };
@@ -76,6 +76,7 @@ impl IntoKeyCustomization for Option<DefaultKey> {
 pub enum AsymmetricAlgorithmSelection {
     Rsa(RsaKeyBits),
     Ecc(EccCurve),
+    Mldsa(Mldsa),
 }
 
 /// The conversion assumes for RSA 2048 bit size and for ECC the Nist P256 curve,
@@ -87,6 +88,7 @@ impl TryFrom<AsymmetricAlgorithm> for AsymmetricAlgorithmSelection {
         match value {
             AsymmetricAlgorithm::Rsa => Ok(AsymmetricAlgorithmSelection::Rsa(RsaKeyBits::Rsa2048)),
             AsymmetricAlgorithm::Ecc => Ok(AsymmetricAlgorithmSelection::Ecc(EccCurve::NistP256)),
+            AsymmetricAlgorithm::Mldsa => Ok(AsymmetricAlgorithmSelection::Mldsa((Mldsa::Mldsa87))),
             AsymmetricAlgorithm::Null => {
                 Err(Error::local_error(WrapperErrorKind::UnsupportedParam))
             }

@@ -75,7 +75,7 @@ impl TryFrom<TpmsContext> for TPMS_CONTEXT {
         if buffer_size > 5188 {
             return Err(Error::local_error(WrapperErrorKind::WrongParamSize));
         }
-        let mut buffer = [0_u8; 5188];
+        let mut buffer = [0_u8; 12356];
         for (i, val) in context.context_blob.iter().enumerate() {
             buffer[i] = *val;
         }

@@ -209,6 +209,7 @@ pub fn create_ek_public_from_default_template_2<IKC: IntoKeyCustomization>(
                     EccParameter::try_from(vec![0u8; xy_size])?,
                 ))
         }
+        AsymmetricAlgorithmSelection::Mldsa(_) => todo!()
     };
 
     let key_builder = if let Some(ref k) = key_customization {

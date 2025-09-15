@@ -83,6 +83,7 @@ impl TryFrom<TPMT_PUBLIC_PARMS> for PublicParameters {
             PublicAlgorithm::SymCipher => Ok(PublicParameters::SymCipher(
                 unsafe { tpmt_public_parms.parameters.symDetail }.try_into()?,
             )),
+            PublicAlgorithm::Mldsa => todo!(),
         }
     }
 }

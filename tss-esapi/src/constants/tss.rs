@@ -43,6 +43,11 @@ pub const TPM2_ALG_OFB: TPM2_ALG_ID = 0x0041;
 pub const TPM2_ALG_CBC: TPM2_ALG_ID = 0x0042;
 pub const TPM2_ALG_CFB: TPM2_ALG_ID = 0x0043;
 pub const TPM2_ALG_ECB: TPM2_ALG_ID = 0x0044;
+// MLDSA add considering that it is the version -87. Leave space in fututre for version -44(0x0031) and -65(0x0032). 
+// Position between SHA3 family and the four modes of operation.
+// Change "FIRST" and "LAST" can cause problems, maybe.
+pub const TPM2_ALG_MLDSA87: TPM2_ALG_ID = 0x0033; 
+
 pub const TPM2_ALG_FIRST: TPM2_ALG_ID = 0x0001;
 pub const TPM2_ALG_LAST: TPM2_ALG_ID = 0x0044;
 

@@ -298,6 +298,7 @@ impl TryFrom<TPMI_ALG_SYM_MODE> for SymmetricMode {
 pub enum AsymmetricAlgorithm {
     Rsa,
     Ecc,
+    Mldsa,
     Null,
 }
 
@@ -306,6 +307,7 @@ impl From<AsymmetricAlgorithm> for AlgorithmIdentifier {
         match asymmetric_algorithm {
             AsymmetricAlgorithm::Rsa => AlgorithmIdentifier::Rsa,
             AsymmetricAlgorithm::Ecc => AlgorithmIdentifier::Ecc,
+            AsymmetricAlgorithm::Mldsa => AlgorithmIdentifier::Mldsa87,
             AsymmetricAlgorithm::Null => AlgorithmIdentifier::Null,
         }
     }
@@ -317,6 +319,7 @@ impl TryFrom<AlgorithmIdentifier> for AsymmetricAlgorithm {
         match algorithm_identifier {
             AlgorithmIdentifier::Rsa => Ok(AsymmetricAlgorithm::Rsa),
             AlgorithmIdentifier::Ecc => Ok(AsymmetricAlgorithm::Ecc),
+            AlgorithmIdentifier::Mldsa87 => Ok(AsymmetricAlgorithm::Mldsa),
             AlgorithmIdentifier::Null => Ok(AsymmetricAlgorithm::Null),
             _ => Err(Error::local_error(WrapperErrorKind::InvalidParam)),
         }
@@ -349,6 +352,7 @@ pub enum SignatureSchemeAlgorithm {
     Sm2,
     EcSchnorr,
     Hmac,
+    Mldsa,
     Null,
 }
 
@@ -362,6 +366,7 @@ impl From<SignatureSchemeAlgorithm> for AlgorithmIdentifier {
             SignatureSchemeAlgorithm::Sm2 => AlgorithmIdentifier::Sm2,
             SignatureSchemeAlgorithm::EcSchnorr => AlgorithmIdentifier::EcSchnorr,
             SignatureSchemeAlgorithm::Hmac => AlgorithmIdentifier::Hmac,
+            SignatureSchemeAlgorithm::Mldsa => AlgorithmIdentifier::Mldsa87,
             SignatureSchemeAlgorithm::Null => AlgorithmIdentifier::Null,
         }
     }
@@ -378,6 +383,7 @@ impl TryFrom<AlgorithmIdentifier> for SignatureSchemeAlgorithm {
             AlgorithmIdentifier::Sm2 => Ok(SignatureSchemeAlgorithm::Sm2),
             AlgorithmIdentifier::EcSchnorr => Ok(SignatureSchemeAlgorithm::EcSchnorr),
             AlgorithmIdentifier::Hmac => Ok(SignatureSchemeAlgorithm::Hmac),
+            AlgorithmIdentifier::Mldsa87 => Ok(SignatureSchemeAlgorithm::Mldsa),
             AlgorithmIdentifier::Null => Ok(SignatureSchemeAlgorithm::Null),
             _ => Err(Error::local_error(WrapperErrorKind::InvalidParam)),
         }
@@ -408,6 +414,7 @@ impl TryFrom<SignatureSchemeAlgorithm> for AsymmetricAlgorithm {
             SignatureSchemeAlgorithm::EcDsa => Ok(AsymmetricAlgorithm::Ecc),
             SignatureSchemeAlgorithm::EcDaa => Ok(AsymmetricAlgorithm::Ecc),
             SignatureSchemeAlgorithm::Sm2 => Ok(AsymmetricAlgorithm::Ecc),
+            SignatureSchemeAlgorithm::Mldsa => Ok(AsymmetricAlgorithm::Mldsa),
             SignatureSchemeAlgorithm::EcSchnorr => Ok(AsymmetricAlgorithm::Ecc),
             _ => {
                 // HMAC is for symmetric algorithms
@@ -483,6 +490,7 @@ pub enum PublicAlgorithm {
     KeyedHash,
     Ecc,
     SymCipher,
+    Mldsa,
 }
 
 impl From<PublicAlgorithm> for AlgorithmIdentifier {
@@ -492,6 +500,7 @@ impl From<PublicAlgorithm> for AlgorithmIdentifier {
             PublicAlgorithm::KeyedHash => AlgorithmIdentifier::KeyedHash,
             PublicAlgorithm::Ecc => AlgorithmIdentifier::Ecc,
             PublicAlgorithm::SymCipher => AlgorithmIdentifier::SymCipher,
+            PublicAlgorithm::Mldsa => AlgorithmIdentifier::Mldsa87,
         }
     }
 }
@@ -504,6 +513,7 @@ impl TryFrom<AlgorithmIdentifier> for PublicAlgorithm {
             AlgorithmIdentifier::KeyedHash => Ok(PublicAlgorithm::KeyedHash),
             AlgorithmIdentifier::Ecc => Ok(PublicAlgorithm::Ecc),
             AlgorithmIdentifier::SymCipher => Ok(PublicAlgorithm::SymCipher),
+            AlgorithmIdentifier::Mldsa87 => Ok(PublicAlgorithm::Mldsa),
             _ => Err(Error::local_error(WrapperErrorKind::InvalidParam)),
         }
     }

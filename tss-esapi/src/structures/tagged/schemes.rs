@@ -557,6 +557,7 @@ pub enum SignatureScheme {
     EcSchnorr { hash_scheme: HashScheme },
     EcDaa { ecdaa_scheme: EcDaaScheme },
     Hmac { hmac_scheme: HmacScheme },
+    Mldsa { hash_scheme: HashScheme},
     Null,
 }
 
@@ -665,6 +666,7 @@ impl From<SignatureScheme> for TPMT_SIG_SCHEME {
                     sm2: hash_scheme.into(),
                 },
             },
+            SignatureScheme::Mldsa { .. } => todo!(),
         }
     }
 }
@@ -696,6 +698,7 @@ impl TryFrom<TPMT_SIG_SCHEME> for SignatureScheme {
             SignatureSchemeAlgorithm::Sm2 => Ok(SignatureScheme::Sm2 {
                 hash_scheme: unsafe { tss.details.sm2 }.try_into()?,
             }),
+            SignatureSchemeAlgorithm::Mldsa => todo!(),
         }
     }
 }
