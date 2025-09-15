@@ -162,6 +162,7 @@ impl TryFrom<TPMT_SENSITIVE> for Sensitive {
                 seed_value: tpmt_sensitive.seedValue.try_into()?,
                 sensitive: unsafe { tpmt_sensitive.sensitive.sym }.try_into()?,
             }),
+            PublicAlgorithm::Mldsa => todo!(),
         }
     }
 }

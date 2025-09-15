@@ -127,6 +127,7 @@ impl TryFrom<TPMT_SIGNATURE> for Signature {
             SignatureSchemeAlgorithm::Hmac => Ok(Signature::Hmac(
                 unsafe { tpmt_signature.signature.hmac }.try_into()?,
             )),
+            SignatureSchemeAlgorithm::Mldsa => todo!(),
             SignatureSchemeAlgorithm::Null => Ok(Signature::Null),
         }
     }

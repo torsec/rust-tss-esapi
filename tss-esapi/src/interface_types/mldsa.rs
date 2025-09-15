@@ -1,4 +1,3 @@
-// Torsec
 // TPMI_ALG_MLDSA_SCHEME taken from crate, but not used until now
 // I took it bcs is the only definition, 
 // together with TPM2_MLDSA_PUBLIC_KEY_BYTES, TPM2_MLDSA_SECRET_KEY_BYTES, TPM2_MLDSA_SIGNATURE_BYTES,

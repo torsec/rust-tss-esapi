@@ -212,6 +212,9 @@ pub fn create_ek_public_from_default_template_2<IKC: IntoKeyCustomization>(
         AsymmetricAlgorithmSelection::Mldsa(_) => todo!()
     };
 
+    // println!("Inside create_ek_public_from_default_template_2, where RSA is first called a PublicBuilder\n");
+
+
     let key_builder = if let Some(ref k) = key_customization {
         k.template(key_builder)
     } else {

@@ -1,14 +1,14 @@
 // Copyright 2021 Contributors to the Parsec project.
 // SPDX-License-Identifier: Apache-2.0
 use crate::{
-    interface_types::algorithm::{
-        EccSchemeAlgorithm, HashingAlgorithm, KeyDerivationFunction, KeyedHashSchemeAlgorithm,
-        RsaDecryptAlgorithm, RsaSchemeAlgorithm, SignatureSchemeAlgorithm,
-    },
-    structures::schemes::{EcDaaScheme, HashScheme, HmacScheme, XorScheme},
+    interface_types::{algorithm::{
+        EccSchemeAlgorithm, HashingAlgorithm, KeyDerivationFunction, KeyedHashSchemeAlgorithm, MldsaSchemeAlgorithm, RsaDecryptAlgorithm, RsaSchemeAlgorithm, SignatureSchemeAlgorithm
+    }, mldsa::Mldsa},
+    structures::{schemes::{EcDaaScheme, HashScheme, HmacScheme, XorScheme}, tagged::public::rsa},
     tss2_esys::{
         TPMT_ECC_SCHEME, TPMT_KDF_SCHEME, TPMT_KEYEDHASH_SCHEME, TPMT_RSA_DECRYPT, TPMT_RSA_SCHEME,
         TPMT_SIG_SCHEME, TPMU_ASYM_SCHEME, TPMU_KDF_SCHEME, TPMU_SCHEME_KEYEDHASH, TPMU_SIG_SCHEME,
+        TPMT_MLDSA_SCHEME,
     },
     Error, Result, WrapperErrorKind,
 };
@@ -96,6 +96,8 @@ impl RsaScheme {
         rsa_scheme_algorithm: RsaSchemeAlgorithm,
         hashing_algorithm: Option<HashingAlgorithm>,
     ) -> Result<RsaScheme> {
+        println!("\nQUI\n");
+        println!("{:?}", rsa_scheme_algorithm);
         match rsa_scheme_algorithm {
             RsaSchemeAlgorithm::RsaSsa => Ok(RsaScheme::RsaSsa(HashScheme::new(
                 hashing_algorithm.ok_or_else(|| {
@@ -128,6 +130,8 @@ impl RsaScheme {
                 })?,
             ))),
             RsaSchemeAlgorithm::Null => {
+                println!("This is the error\n");
+                println!("{:?}", hashing_algorithm);
                 if hashing_algorithm.is_none() {
                     Ok(RsaScheme::Null)
                 } else {
@@ -441,6 +445,88 @@ impl TryFrom<TPMT_KDF_SCHEME> for KeyDerivationFunctionScheme {
     }
 }
 
+/// Enum representing the mldsa scheme
+///
+/// # Details
+/// This corresponds to TPMT_MLDSA_SCHEME.
+/// This uses a subset of the TPMU_ASYM_SCHEME
+/// that has the TPMI_ALG_MLDSA_SCHEME as selector.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MldsaScheme {
+    Mldsa87(HashScheme),
+    Null,
+}
+
+impl MldsaScheme {
+    /// Creates a new MldsaScheme
+    ///
+    /// # Errors
+    /// - `InconsistentParams` error will be returned if no hashing algorithm
+    ///   is provided when creating MLDSA scheme of type MLDSA 87
+    ///   or if a hashing algorithm is provided when creating a MLDSA scheme
+    pub fn create(
+        mldsa_scheme_algorithm: MldsaSchemeAlgorithm,
+        hashing_algorithm: Option<HashingAlgorithm>,
+     ) -> Result<MldsaScheme> {
+        match mldsa_scheme_algorithm {
+            MldsaSchemeAlgorithm::Mldsa87 => Ok(MldsaScheme::Mldsa87(HashScheme::new(
+                hashing_algorithm.ok_or_else(|| {
+                    error!(
+                        "Hashing algorithm is required when creating MLDSA scheme of type MLDSA 87"
+                    );
+                    Error::local_error(WrapperErrorKind::InconsistentParams)
+                })?,
+            ))),
+            MldsaSchemeAlgorithm::Null => {
+                if hashing_algorithm.is_none() {
+                    Ok(MldsaScheme::Null)
+                } else {
+                    error!("A hashing algorithm shall not be provided when creating MLDSA scheme of type Null");
+                    Err(Error::local_error(WrapperErrorKind::InconsistentParams))
+                }
+            }
+        }
+    }
+
+    // Returns the mldsa scheme algorithm
+    pub fn algorithm(&self) -> MldsaSchemeAlgorithm {
+        match self {
+            &MldsaScheme::Mldsa87(_) => MldsaSchemeAlgorithm::Mldsa87,
+            &MldsaScheme::Null => MldsaSchemeAlgorithm::Null,
+        }
+    }
+}
+
+impl From<MldsaScheme> for TPMT_MLDSA_SCHEME {
+    fn from(mldsa_scheme: MldsaScheme) -> Self {
+        match mldsa_scheme {
+            MldsaScheme::Mldsa87(hash_scheme) => TPMT_MLDSA_SCHEME {
+                scheme: mldsa_scheme.algorithm().into(),
+                details: TPMU_ASYM_SCHEME {
+                    mldsa: hash_scheme.into(),
+                }
+            },
+            MldsaScheme::Null => TPMT_MLDSA_SCHEME {
+                scheme: mldsa_scheme.algorithm().into(),
+                details: Default::default(),
+            }
+         }
+    }
+}
+
+impl TryFrom<TPMT_MLDSA_SCHEME> for MldsaScheme {
+    type Error = Error;
+
+    fn try_from(tpmt_mldsa_scheme: TPMT_MLDSA_SCHEME) -> Result<Self> {
+        match MldsaSchemeAlgorithm::try_from(tpmt_mldsa_scheme.scheme)? {
+            MldsaSchemeAlgorithm::Mldsa87 => Ok(MldsaScheme::Mldsa87(
+                unsafe { tpmt_mldsa_scheme.details.mldsa }.try_into()?,
+            )),
+            MldsaSchemeAlgorithm::Null => Ok(MldsaScheme::Null),
+        }
+    }
+}
+
 /// Enum representing the rsa decryption scheme
 ///
 /// # Details
@@ -557,7 +643,7 @@ pub enum SignatureScheme {
     EcSchnorr { hash_scheme: HashScheme },
     EcDaa { ecdaa_scheme: EcDaaScheme },
     Hmac { hmac_scheme: HmacScheme },
-    Mldsa { hash_scheme: HashScheme},
+    Mldsa87 { hash_scheme: HashScheme},
     Null,
 }
 
@@ -577,7 +663,8 @@ impl SignatureScheme {
             | SignatureScheme::RsaPss { hash_scheme }
             | SignatureScheme::EcDsa { hash_scheme }
             | SignatureScheme::Sm2 { hash_scheme }
-            | SignatureScheme::EcSchnorr { hash_scheme } => Ok(hash_scheme.hashing_algorithm()),
+            | SignatureScheme::EcSchnorr { hash_scheme }
+            | SignatureScheme::Mldsa87 { hash_scheme } => Ok(hash_scheme.hashing_algorithm()),
             SignatureScheme::EcDaa { ecdaa_scheme } => Ok(ecdaa_scheme.hashing_algorithm()),
             _ => {
                 error!("Cannot access digest for a non signing scheme");
@@ -601,7 +688,8 @@ impl SignatureScheme {
             | SignatureScheme::RsaPss { hash_scheme }
             | SignatureScheme::EcDsa { hash_scheme }
             | SignatureScheme::Sm2 { hash_scheme }
-            | SignatureScheme::EcSchnorr { hash_scheme } => {
+            | SignatureScheme::EcSchnorr { hash_scheme }
+            | SignatureScheme::Mldsa87 { hash_scheme } => {
                 *hash_scheme = HashScheme::new(hashing_algorithm);
                 Ok(())
             }
@@ -664,11 +752,14 @@ impl From<SignatureScheme> for TPMT_SIG_SCHEME {
                 scheme: SignatureSchemeAlgorithm::Sm2.into(),
                 details: TPMU_SIG_SCHEME {
                     sm2: hash_scheme.into(),
-                },
+                      },
             },
-            SignatureScheme::Mldsa { .. } => todo!(),
-        }
-    }
+            SignatureScheme::Mldsa87 { hash_scheme } => TPMT_SIG_SCHEME { 
+                scheme: SignatureSchemeAlgorithm::Mldsa.into(), 
+                details: TPMU_SIG_SCHEME {
+                    mldsa87: hash_scheme.into(),
+        },
+    },
 }
 
 impl TryFrom<TPMT_SIG_SCHEME> for SignatureScheme {

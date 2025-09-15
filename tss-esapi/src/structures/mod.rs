@@ -40,6 +40,7 @@ pub use self::buffers::{
     private_key_rsa::PrivateKeyRsa, private_vendor_specific::PrivateVendorSpecific,
     public::PublicBuffer, public_key_rsa::PublicKeyRsa, sensitive::SensitiveBuffer,
     sensitive_data::SensitiveData, symmetric_key::SymmetricKey, timeout::Timeout,
+    public_key_mldsa::PublicKeyMldsa,
 };
 // ///////////////////////////////////////////////////////
 // The creation section
@@ -156,10 +157,11 @@ pub use tagged::{
         ecc::{PublicEccParameters, PublicEccParametersBuilder},
         keyed_hash::PublicKeyedHashParameters,
         rsa::{PublicRsaParameters, PublicRsaParametersBuilder, RsaExponent},
+        mldsa::{PublicMldsaParameters, PublicMldsaParametersBuilder},
         Public, PublicBuilder,
     },
     schemes::{
-        EccScheme, KeyDerivationFunctionScheme, KeyedHashScheme, RsaDecryptionScheme, RsaScheme,
+        EccScheme, KeyDerivationFunctionScheme, KeyedHashScheme, RsaDecryptionScheme, RsaScheme, MldsaScheme,
         SignatureScheme,
     },
     sensitive::Sensitive,

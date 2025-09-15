@@ -6,6 +6,7 @@ use crate::{
         TPMI_ALG_ASYM, TPMI_ALG_ECC_SCHEME, TPMI_ALG_HASH, TPMI_ALG_KDF, TPMI_ALG_KEYEDHASH_SCHEME,
         TPMI_ALG_PUBLIC, TPMI_ALG_RSA_DECRYPT, TPMI_ALG_RSA_SCHEME, TPMI_ALG_SIG_SCHEME,
         TPMI_ALG_SYM, TPMI_ALG_SYM_MODE, TPMI_ALG_SYM_OBJECT,
+        TPMI_ALG_MLDSA_SCHEME,
     },
     Error, Result, WrapperErrorKind,
 };
@@ -521,6 +522,7 @@ impl TryFrom<AlgorithmIdentifier> for PublicAlgorithm {
 
 impl From<PublicAlgorithm> for TPMI_ALG_PUBLIC {
     fn from(public_algorithm: PublicAlgorithm) -> Self {
+        // println!("From PublicAlgorithm transformation {:?}\n", public_algorithm);
         AlgorithmIdentifier::from(public_algorithm).into()
     }
 }
@@ -644,6 +646,52 @@ impl TryFrom<TPMI_ALG_ECC_SCHEME> for EccSchemeAlgorithm {
 
     fn try_from(tpmi_alg_ecc_scheme: TPMI_ALG_ECC_SCHEME) -> Result<Self> {
         EccSchemeAlgorithm::try_from(AlgorithmIdentifier::try_from(tpmi_alg_ecc_scheme)?)
+    }
+}
+
+/// 
+/// Enum repsenting the mldsa scheme interface type
+///
+/// # Details
+/// This corresponds to TPMI_ALG_MLDSA_SCHEME
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum MldsaSchemeAlgorithm{
+    Mldsa87,
+    Null,
+}
+
+impl From<MldsaSchemeAlgorithm> for AlgorithmIdentifier {
+    fn from(mldsa_scheme_algorithm: MldsaSchemeAlgorithm) -> Self {
+        match mldsa_scheme_algorithm {
+            MldsaSchemeAlgorithm::Mldsa87 => AlgorithmIdentifier::Mldsa87,
+            MldsaSchemeAlgorithm::Null => AlgorithmIdentifier::Null,
+        }
+    }
+}
+
+impl TryFrom<AlgorithmIdentifier> for MldsaSchemeAlgorithm {
+    type Error = Error;
+
+    fn try_from(algorithm_identifier: AlgorithmIdentifier) -> Result<Self> {
+        match algorithm_identifier {
+            AlgorithmIdentifier::Mldsa87 => Ok(MldsaSchemeAlgorithm::Mldsa87),
+            AlgorithmIdentifier::Null => Ok(MldsaSchemeAlgorithm::Null),
+            _ => Err(Error::local_error(WrapperErrorKind::InvalidParam)),
+        }
+    }
+}
+
+impl From<MldsaSchemeAlgorithm> for TPMI_ALG_MLDSA_SCHEME {
+    fn from(mldsa_scheme_algorithm: MldsaSchemeAlgorithm) -> Self {
+        AlgorithmIdentifier::from(mldsa_scheme_algorithm).into()
+    }
+}
+
+impl TryFrom<TPMI_ALG_MLDSA_SCHEME> for MldsaSchemeAlgorithm {
+    type Error = Error;
+
+    fn try_from(tpmi_alg_mldsa_scheme: TPMI_ALG_MLDSA_SCHEME) -> Result<Self> {
+        MldsaSchemeAlgorithm::try_from(AlgorithmIdentifier::try_from(tpmi_alg_mldsa_scheme)?)
     }
 }
 

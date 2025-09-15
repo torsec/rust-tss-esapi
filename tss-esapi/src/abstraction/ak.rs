@@ -8,16 +8,12 @@ use crate::{
     handles::{AuthHandle, KeyHandle, SessionHandle},
     interface_types::{
         algorithm::{
-            AsymmetricAlgorithm, EccSchemeAlgorithm, HashingAlgorithm, PublicAlgorithm,
-            RsaSchemeAlgorithm, SignatureSchemeAlgorithm,
+            AsymmetricAlgorithm, EccSchemeAlgorithm, HashingAlgorithm, MldsaSchemeAlgorithm, PublicAlgorithm, RsaSchemeAlgorithm, SignatureSchemeAlgorithm
         },
         session_handles::PolicySession,
     },
     structures::{
-        Auth, CreateKeyResult, Digest, DigestList, EccPoint, EccScheme,
-        KeyDerivationFunctionScheme, Private, Public, PublicBuilder, PublicEccParametersBuilder,
-        PublicKeyRsa, PublicRsaParametersBuilder, RsaExponent, RsaScheme,
-        SymmetricDefinitionObject,
+        Auth, CreateKeyResult, Digest, DigestList, EccPoint, EccScheme, KeyDerivationFunctionScheme, MldsaScheme, Private, Public, PublicBuilder, PublicEccParametersBuilder, PublicKeyMldsa, PublicKeyRsa, PublicMldsaParameters, PublicMldsaParametersBuilder, PublicRsaParametersBuilder, RsaExponent, RsaScheme, SymmetricDefinitionObject
     },
     Context, Error, Result, WrapperErrorKind,
 };
@@ -64,10 +60,12 @@ fn create_ak_public<IKC: IntoKeyCustomization>(
     sign_alg: SignatureSchemeAlgorithm,
     key_customization: IKC,
 ) -> Result<Public> {
-    println!("I am in create_ak_public\n");
+    // println!("\nI am in create_ak_public\n");
     let key_customization = key_customization.into_key_customization();
 
-    println!("I am after key customization\n");
+    //println!("I am after key customization\n");
+
+    // println!("{:?}", hash_alg);
 
     let obj_attrs_builder = ObjectAttributesBuilder::new()
         .with_restricted(true)
@@ -84,6 +82,10 @@ fn create_ak_public<IKC: IntoKeyCustomization>(
         obj_attrs_builder
     }
     .build()?;
+    println!("\nArrivato qui");
+    println!("{:?}", key_alg);
+    println!("{:?}", hash_alg);
+    println!("{:?}", sign_alg);
 
     let key_builder = match key_alg {
         AsymmetricAlgorithmSelection::Rsa(key_bits) => PublicBuilder::new()
@@ -130,16 +132,35 @@ fn create_ak_public<IKC: IntoKeyCustomization>(
             .with_name_hashing_algorithm(hash_alg)
             .with_object_attributes(obj_attrs)
             .with_mldsa_parameters(
+                PublicMldsaParametersBuilder::new()
+                    .with_scheme(MldsaScheme::create(
+                        MldsaSchemeAlgorithm::try_from(AlgorithmIdentifier::from(sign_alg))?, 
+                        Some(hash_alg),
+                    )?)
+                    .with_mlsda(key_bytes)
+                    .with_is_signing_key(obj_attrs.sign_encrypt())
+                    .with_is_decryption_key(obj_attrs.decrypt())
+                    .with_restricted(obj_attrs.restricted())
+                    .build()?,
             )
-            .with_mldsa_unique_identifier()
+            .with_mldsa_unique_identifier(PublicKeyMldsa::default()),
     };
 
-    println!("I am HERE\n");
+    //println!("{:?}", key_builder);
+
+    println!("I am HERE folks\n");
     let key_builder = if let Some(ref k) = key_customization {
+        println!("This is ok\n");
         k.template(key_builder)
     } else {
+        println!("This is NOT ok\n");
         key_builder
     };
+
+    println!("\n{:?}\n\n", key_builder);
+
+    // println!("Is it here?");
+    // println!("{:?}", AlgorithmIdentifier::from(sign_alg));
 
     key_builder.build()
 }
@@ -290,6 +311,8 @@ pub fn create_ak_2<IKC: IntoKeyCustomization>(
     key_customization: IKC,
 ) -> Result<CreateKeyResult> {
     println!("I am HERE Attestation Key\n");
+    println!("Asymmetric Algorithm: {:?}\n", key_alg);
+    println!("Signing key: {:?}\n", sign_alg);
     let ak_pub = create_ak_public(key_alg, hash_alg, sign_alg, key_customization)?;
     println!("I am HERE\n");
     let (parent_hash_alg, parent_symmetric, policy_digests) = session_config(context, parent)?;

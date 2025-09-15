@@ -363,6 +363,38 @@ pub mod public_key_rsa {
     }
 }
 
+pub mod public_key_mldsa {
+    use crate::{interface_types::mldsa::Mldsa, tss2_esys::TPM2_MLDSA_PUBLIC_KEY_BYTES};
+    const TPM2B_PUBLIC_KEY_MLDSA_BUFFER_SIZE: usize = TPM2_MLDSA_PUBLIC_KEY_BYTES as usize;
+    buffer_type!(
+        PublicKeyMldsa,
+        TPM2B_PUBLIC_KEY_MLDSA_BUFFER_SIZE,
+        TPM2B_PUBLIC_KEY_MLDSA
+    );
+
+    impl PublicKeyMldsa {
+        pub fn new_empty_with_size(mldsa_key_bytes: Mldsa) -> Self {
+            match mldsa_key_bytes {
+                Mldsa::Mldsa87 => PublicKeyMldsa(vec![0u8; 2592].into()),
+            }
+        }
+    }
+
+    impl TryFrom<PublicKeyMldsa> for [u8; 2592] {
+        type Error = Error;
+
+        fn try_from(public_key_mldsa: PublicKeyMldsa) -> Result<Self> {
+            if public_key_mldsa.value().len() > 2592 {
+                return Err(Error::local_error(WrapperErrorKind::WrongParamSize));
+            }
+
+            let mut value = [0u8; 2592];
+            value.copy_from_slice(public_key_mldsa.value());
+            Ok(value)
+        }
+    }
+}
+
 pub mod sensitive_data {
     // This should be size_of::<TPMU_SENSITIVE_CREATE>(), but this not available
     // in old versions of tpm2-tss so the size calculated from sized buffer instead.

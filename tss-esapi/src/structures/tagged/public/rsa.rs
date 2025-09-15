@@ -23,7 +23,8 @@ pub struct PublicRsaParametersBuilder {
 
 impl PublicRsaParametersBuilder {
     /// Creates a new [PublicRsaParametersBuilder]
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
+        // println!("NEW RSA Builder");
         PublicRsaParametersBuilder {
             symmetric: None,
             rsa_scheme: None,
@@ -78,7 +79,8 @@ impl PublicRsaParametersBuilder {
     }
 
     /// Adds a [RsaScheme] to the [PublicRsaParametersBuilder].
-    pub const fn with_scheme(mut self, rsa_scheme: RsaScheme) -> Self {
+    pub fn with_scheme(mut self, rsa_scheme: RsaScheme) -> Self {
+        // println!("Debug: entering with_scheme");
         self.rsa_scheme = Some(rsa_scheme);
         self
     }
@@ -324,7 +326,7 @@ impl PublicRsaParameters {
     }
 
     /// Get a builder for this structure
-    pub const fn builder() -> PublicRsaParametersBuilder {
+    pub fn builder() -> PublicRsaParametersBuilder {
         PublicRsaParametersBuilder::new()
     }
 }

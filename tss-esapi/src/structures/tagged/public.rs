@@ -9,7 +9,7 @@ use crate::{
     attributes::ObjectAttributes,
     interface_types::algorithm::{HashingAlgorithm, PublicAlgorithm},
     structures::{
-        Digest, EccPoint, PublicKeyRsa, SymmetricCipherParameters, SymmetricDefinitionObject,
+        Digest, EccPoint, PublicKeyRsa, SymmetricCipherParameters, SymmetricDefinitionObject, PublicKeyMldsa,
     },
     traits::{Marshall, UnMarshall},
     tss2_esys::{TPM2B_PUBLIC, TPMT_PUBLIC},
@@ -19,6 +19,7 @@ use crate::{
 use ecc::PublicEccParameters;
 use keyed_hash::PublicKeyedHashParameters;
 use rsa::PublicRsaParameters;
+use mldsa::PublicMldsaParameters;
 
 use log::error;
 use std::{
@@ -42,6 +43,8 @@ pub struct PublicBuilder {
     ecc_unique_identifier: Option<EccPoint>,
     symmetric_cipher_parameters: Option<SymmetricCipherParameters>,
     symmetric_cipher_unique_identifier: Option<Digest>,
+    mldsa_parameters: Option<PublicMldsaParameters>,
+    mldsa_unique_identifier: Option<PublicKeyMldsa>,
 }
 
 impl PublicBuilder {
@@ -51,7 +54,8 @@ impl PublicBuilder {
     /// Builds the [Public] type using the provided parameters. Parameters
     /// associated with other algorithms then the provided public algorithm
     /// will be ignored.
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
+        println!("NEW Public Builder");
         PublicBuilder {
             public_algorithm: None,
             object_attributes: None,
@@ -65,30 +69,40 @@ impl PublicBuilder {
             ecc_unique_identifier: None,
             symmetric_cipher_parameters: None,
             symmetric_cipher_unique_identifier: None,
+            mldsa_parameters: None,
+            mldsa_unique_identifier: None
         }
     }
 
     /// Adds the public algorithm for the [Public] structure
     /// to the builder.
-    pub const fn with_public_algorithm(mut self, public_algorithm: PublicAlgorithm) -> Self {
+    pub fn with_public_algorithm(mut self, public_algorithm: PublicAlgorithm) -> Self {
+        println!("Debug: entering with_public_algorithm: {:?}", public_algorithm);
         self.public_algorithm = Some(public_algorithm);
+        match public_algorithm {
+            PublicAlgorithm::Mldsa => {println!("With Public Algorithm: {:?}", self);},
+            _ => {println!("Go ahead")}
+        };
         self
     }
 
     /// Adds the attributes of the [Public] structure
     /// to the builder
-    pub const fn with_object_attributes(mut self, object_attributes: ObjectAttributes) -> Self {
+    pub fn with_object_attributes(mut self, object_attributes: ObjectAttributes) -> Self {
         self.object_attributes = Some(object_attributes);
+        // println!("Debug: entering with_object_attributes");
         self
     }
 
     /// Adds the name hash algorithm for the [Public] structure
     /// to the builder.
-    pub const fn with_name_hashing_algorithm(
+    pub fn with_name_hashing_algorithm(
         mut self,
         name_hashing_algorithm: HashingAlgorithm,
     ) -> Self {
+        
         self.name_hashing_algorithm = Some(name_hashing_algorithm);
+        // println!("Debug: entering name_hashing_algorithm");
         self
     }
 
@@ -106,6 +120,7 @@ impl PublicBuilder {
     /// This is required if the public algorithm is set to
     /// [Rsa][`crate::interface_types::algorithm::PublicAlgorithm::Rsa].
     pub fn with_rsa_parameters(mut self, rsa_parameters: PublicRsaParameters) -> Self {
+        // println!("Debug: entering with_rsa_parameters");
         self.rsa_parameters = Some(rsa_parameters);
         self
     }
@@ -119,6 +134,7 @@ impl PublicBuilder {
     ///
     /// The unique identifier is the public key.
     pub fn with_rsa_unique_identifier(mut self, rsa_unique_identifier: PublicKeyRsa) -> Self {
+        // println!("Debug: entering with_rsa__unique_identifier");
         self.rsa_unique_identifier = Some(rsa_unique_identifier);
         self
     }
@@ -157,7 +173,8 @@ impl PublicBuilder {
     /// # Details
     /// This is required if the public algorithm is set to
     /// [Ecc][`crate::interface_types::algorithm::PublicAlgorithm::Ecc].
-    pub const fn with_ecc_parameters(mut self, ecc_parameters: PublicEccParameters) -> Self {
+    pub fn with_ecc_parameters(mut self, ecc_parameters: PublicEccParameters) -> Self {
+        // println!("Debug: entering with_ecc_parameters");
         self.ecc_parameters = Some(ecc_parameters);
         self
     }
@@ -181,7 +198,9 @@ impl PublicBuilder {
     /// # Details
     /// This is required if the public algorithm is set to
     /// [Mldsa][]
-    pub const fn with_mldsa_parameters(mut self/*, mldsa_parameters: PublicMldsaParameters*/) -> Self{
+    pub fn with_mldsa_parameters(mut self, mldsa_parameters: PublicMldsaParameters) -> Self{
+        println!("Try this please\n");
+        self.mldsa_parameters = Some(mldsa_parameters);
         self
     }
 
@@ -191,7 +210,8 @@ impl PublicBuilder {
     /// # Details
     /// This is required if the public algorithm is set to
     /// [Mldsa][]
-    pub fn with_mldsa_unique_identifier(mut self/*, mldsa_unique_identifier: PublicKeyMldsa*/) -> Self{
+    pub fn with_mldsa_unique_identifier(mut self, mldsa_unique_identifier: PublicKeyMldsa) -> Self{
+        self.mldsa_unique_identifier = Some(mldsa_unique_identifier);
         self
     }
 
@@ -230,6 +250,8 @@ impl PublicBuilder {
     /// hashing algorithm have not been set or if the parameters and unique identifier
     /// does not match the selected public algorithm.
     pub fn build(self) -> Result<Public> {
+        // println!("{:?}", self);
+        // println!("{:?}", self.public_algorithm);
         let algorithm = self.public_algorithm.ok_or_else(|| {
             error!("Algorithm is required and has not been set in the PublicBuilder");
             Error::local_error(WrapperErrorKind::ParamsMissing)
@@ -248,6 +270,8 @@ impl PublicBuilder {
         })?;
 
         let auth_policy = self.auth_policy.unwrap_or_default();
+
+        // println!("HELLO\n");
 
         match algorithm {
             PublicAlgorithm::Rsa => {
@@ -294,7 +318,7 @@ impl PublicBuilder {
                         Error::local_error(WrapperErrorKind::ParamsMissing)
                     })?,
                 })
-            }
+            },
             PublicAlgorithm::SymCipher => {
                 Ok(Public::SymCipher {
                     object_attributes,
@@ -309,7 +333,22 @@ impl PublicBuilder {
                         Error::local_error(WrapperErrorKind::ParamsMissing)
                     })?,
                 })
-            }
+            },
+            PublicAlgorithm::Mldsa => {
+                Ok(Public::Mldsa { 
+                    object_attributes, 
+                    name_hashing_algorithm, 
+                    auth_policy, 
+                    parameters: self.mldsa_parameters.ok_or_else(|| {
+                        error!("MLDSA parameters have not been set in the PublicBuilder even though the MLDSA algorithm had been selected.");
+                        Error::local_error(WrapperErrorKind::ParamsMissing)
+                    })?,
+                    unique: self.mldsa_unique_identifier.ok_or_else(|| {
+                        error!("MLDSA unique identifier has not been set in the PublicBuilder even though the MLDSA algorithm had been selected. Consider using: .with_mldsa_unique_identifier(&PublicKeyMldsa::default())");
+                        Error::local_error(WrapperErrorKind::ParamsMissing)
+                    })?,
+                })
+            },
         }
     }
 }
@@ -354,6 +393,13 @@ pub enum Public {
         parameters: SymmetricCipherParameters,
         unique: Digest,
     },
+    Mldsa {
+        object_attributes: ObjectAttributes,
+        name_hashing_algorithm: HashingAlgorithm,
+        auth_policy: Digest,
+        parameters: PublicMldsaParameters,
+        unique: PublicKeyMldsa,
+    }
 }
 
 impl Public {
@@ -370,6 +416,9 @@ impl Public {
                 object_attributes, ..
             }
             | Public::SymCipher {
+                object_attributes, ..
+            }
+            |Public::Mldsa{
                 object_attributes, ..
             } => *object_attributes,
         }
@@ -393,6 +442,10 @@ impl Public {
             | Public::SymCipher {
                 name_hashing_algorithm,
                 ..
+            }
+            | Public::Mldsa {  
+                name_hashing_algorithm,
+                ..
             } => *name_hashing_algorithm,
         }
     }
@@ -404,6 +457,7 @@ impl Public {
             Public::KeyedHash { .. } => None,
             Public::Ecc { parameters, .. } => Some(parameters.symmetric_definition_object()),
             Public::SymCipher { parameters, .. } => Some(parameters.symmetric_definition_object()),
+            Public::Mldsa { parameters, .. } => None,
         }
     }
 
@@ -413,12 +467,13 @@ impl Public {
             Public::Rsa { auth_policy, .. }
             | Public::KeyedHash { auth_policy, .. }
             | Public::Ecc { auth_policy, .. }
-            | Public::SymCipher { auth_policy, .. } => auth_policy,
+            | Public::SymCipher { auth_policy, .. }
+            | Public::Mldsa { auth_policy, .. } => auth_policy,
         }
     }
 
     /// Get a builder for this structure
-    pub const fn builder() -> PublicBuilder {
+    pub fn builder() -> PublicBuilder {
         PublicBuilder::new()
     }
 }
@@ -492,6 +547,22 @@ impl From<Public> for TPMT_PUBLIC {
                 },
                 unique: TPMU_PUBLIC_ID { sym: unique.into() },
             },
+            Public::Mldsa { 
+                object_attributes,
+                name_hashing_algorithm,
+                auth_policy,
+                parameters,
+                unique,
+             } => TPMT_PUBLIC {
+                type_: PublicAlgorithm::Mldsa.into(),
+                nameAlg: name_hashing_algorithm.into(),
+                objectAttributes: object_attributes.into(),
+                authPolicy: auth_policy.into(),
+                parameters: TPMU_PUBLIC_PARMS {
+                    mldsaDetail: parameters.into(),
+                },
+                unique: TPMU_PUBLIC_ID { mldsa: unique.into() },
+             }
         }
     }
 }
@@ -528,6 +599,13 @@ impl TryFrom<TPMT_PUBLIC> for Public {
                 auth_policy: tpmt_public.authPolicy.try_into()?,
                 parameters: unsafe { tpmt_public.parameters.symDetail }.try_into()?,
                 unique: unsafe { tpmt_public.unique.sym }.try_into()?,
+            }),
+            PublicAlgorithm::Mldsa => Ok(Public::Mldsa { 
+                object_attributes: tpmt_public.objectAttributes.into(), 
+                name_hashing_algorithm: tpmt_public.nameAlg.try_into()?, 
+                auth_policy: tpmt_public.authPolicy.try_into()?, 
+                parameters: unsafe { tpmt_public.parameters.mldsaDetail }.try_into()?, 
+                unique: unsafe { tpmt_public.unique.mldsa }.try_into()?,
             }),
         }
     }
