@@ -757,7 +757,7 @@ impl From<SignatureScheme> for TPMT_SIG_SCHEME {
             SignatureScheme::Mldsa87 { hash_scheme } => TPMT_SIG_SCHEME { 
                 scheme: SignatureSchemeAlgorithm::Mldsa.into(), 
                 details: TPMU_SIG_SCHEME {
-                    mldsa87: hash_scheme.into(),
+                    any: hash_scheme.into(),
         },
     },
 }
