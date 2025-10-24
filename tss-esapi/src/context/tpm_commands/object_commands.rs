@@ -15,12 +15,13 @@ use crate::{
     },
     Context, Error, Result,
 };
-use log::error;
+use log::{error, debug, trace};
 use std::{
     convert::{TryFrom, TryInto},
     mem::size_of,
     ptr::{null, null_mut},
 };
+use std::mem;
 
 impl Context {
     /// Create a key and return the handle.
@@ -68,6 +69,8 @@ impl Context {
         let mut creation_hash_ptr = null_mut();
         let mut creation_ticket_ptr = null_mut();
 
+        debug!("I am in Create (object_commands.rs)\n\n");
+
         let ret = unsafe {
             Esys_Create(
                 self.mut_context(),
@@ -86,7 +89,9 @@ impl Context {
                 &mut creation_ticket_ptr,
             )
         };
+        debug!("Before possible TSS error code (Create)\n");
         let ret = Error::from_tss_rc(ret);
+        debug!("After possible TSS error code(Create)\n");
 
         if ret.is_success() {
             let out_private_owned = Context::ffi_data_to_owned(out_private_ptr);
@@ -115,6 +120,10 @@ impl Context {
         public: Public,
     ) -> Result<KeyHandle> {
         let mut object_handle = ObjectHandle::None.into();
+
+        debug!("I am in Load (object_commands.rs)\n");
+        debug!("The size of the ctx variable is: {:?}\n",mem::size_of_val(self));
+
         let ret = unsafe {
             Esys_Load(
                 self.mut_context(),
@@ -127,7 +136,11 @@ impl Context {
                 &mut object_handle,
             )
         };
+        debug!("Before possible TSS error code (Load)\n");
         let ret = Error::from_tss_rc(ret);
+        debug!("Before possible TSS error code (Load)\n");
+
+
         if ret.is_success() {
             let key_handle = KeyHandle::from(object_handle);
             self.handle_manager

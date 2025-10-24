@@ -43,7 +43,7 @@ pub const TPM2_ALG_OFB: TPM2_ALG_ID = 0x0041;
 pub const TPM2_ALG_CBC: TPM2_ALG_ID = 0x0042;
 pub const TPM2_ALG_CFB: TPM2_ALG_ID = 0x0043;
 pub const TPM2_ALG_ECB: TPM2_ALG_ID = 0x0044;
-// MLDSA add considering that it is the version -87. Leave space in future for version -44(0x0031) and -65(0x0032). 
+// MLDSA add considering that it is the version -87. Leave space in fututre for version -44(0x0031) and -65(0x0032). 
 // Position between SHA3 family and the four mode of operation.
 // I dont want to change "FIRST" and "LAST", because this can cause problems, maybe.
 /* aborted due to coherence with TSS. (see /include/tss2/tss2_tpm2_types.h)

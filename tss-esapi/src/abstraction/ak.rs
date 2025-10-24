@@ -17,7 +17,7 @@ use crate::{
     },
     Context, Error, Result, WrapperErrorKind,
 };
-use log::error;
+use log::{error, debug, trace};
 use std::convert::TryFrom;
 use std::mem;
 

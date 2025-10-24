@@ -72,7 +72,8 @@ impl TryFrom<TpmsContext> for TPMS_CONTEXT {
 
     fn try_from(context: TpmsContext) -> Result<Self> {
         let buffer_size = context.context_blob.len();
-        if buffer_size > 5188 {
+        println!("I am in 'utils/mod.rs' The buffer size is: {:?}", buffer_size);
+        if buffer_size > 12356 {
             return Err(Error::local_error(WrapperErrorKind::WrongParamSize));
         }
         let mut buffer = [0_u8; 12356];

@@ -649,6 +649,7 @@ impl TryFrom<TPMI_ALG_ECC_SCHEME> for EccSchemeAlgorithm {
     }
 }
 
+/// TORSEC
 /// 
 /// Enum repsenting the mldsa scheme interface type
 ///

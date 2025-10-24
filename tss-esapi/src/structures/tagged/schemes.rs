@@ -12,7 +12,7 @@ use crate::{
     },
     Error, Result, WrapperErrorKind,
 };
-use log::error;
+use log::{error, debug, trace};
 use std::convert::{TryFrom, TryInto};
 
 /// Enum representing the keyed hash scheme.
@@ -130,8 +130,8 @@ impl RsaScheme {
                 })?,
             ))),
             RsaSchemeAlgorithm::Null => {
-                println!("This is the error\n");
-                println!("{:?}", hashing_algorithm);
+                trace!("Once I had an error here\n");
+                debug!("{:?}", hashing_algorithm);
                 if hashing_algorithm.is_none() {
                     Ok(RsaScheme::Null)
                 } else {
@@ -663,8 +663,8 @@ impl SignatureScheme {
             | SignatureScheme::RsaPss { hash_scheme }
             | SignatureScheme::EcDsa { hash_scheme }
             | SignatureScheme::Sm2 { hash_scheme }
-            | SignatureScheme::EcSchnorr { hash_scheme }
-            | SignatureScheme::Mldsa87 { hash_scheme } => Ok(hash_scheme.hashing_algorithm()),
+            | SignatureScheme::Mldsa87 { hash_scheme }
+            | SignatureScheme::EcSchnorr { hash_scheme } => Ok(hash_scheme.hashing_algorithm()),
             SignatureScheme::EcDaa { ecdaa_scheme } => Ok(ecdaa_scheme.hashing_algorithm()),
             _ => {
                 error!("Cannot access digest for a non signing scheme");
@@ -752,14 +752,17 @@ impl From<SignatureScheme> for TPMT_SIG_SCHEME {
                 scheme: SignatureSchemeAlgorithm::Sm2.into(),
                 details: TPMU_SIG_SCHEME {
                     sm2: hash_scheme.into(),
-                      },
+                },
             },
+            // SignatureScheme::Mldsa87 => todo!(),
             SignatureScheme::Mldsa87 { hash_scheme } => TPMT_SIG_SCHEME { 
                 scheme: SignatureSchemeAlgorithm::Mldsa.into(), 
                 details: TPMU_SIG_SCHEME {
                     any: hash_scheme.into(),
-        },
-    },
+                },
+            },
+        }
+    }
 }
 
 impl TryFrom<TPMT_SIG_SCHEME> for SignatureScheme {

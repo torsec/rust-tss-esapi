@@ -12,7 +12,7 @@ use crate::{
     Error, Result, WrapperErrorKind as ErrorKind,
 };
 use handle_manager::HandleManager;
-use log::{error, info};
+use log::{error, info, debug};
 use mbox::MBox;
 use std::collections::HashMap;
 use std::ptr::null_mut;
@@ -295,6 +295,7 @@ impl Context {
             None => return Err(E::from(Error::local_error(ErrorKind::WrongValueFromTpm))),
         };
 
+        debug!("After start_auth_session\n");
         let (session_attributes, session_attributes_mask) = SessionAttributesBuilder::new()
             .with_decrypt(true)
             .with_encrypt(true)

@@ -6,7 +6,7 @@ use crate::{
     tss2_esys::{TPMS_RSA_PARMS, UINT32},
     Error, Result, WrapperErrorKind,
 };
-use log::error;
+use log::{error, debug, trace};
 use std::convert::{TryFrom, TryInto};
 
 /// Builder for `TPMS_RSA_PARMS` values.
@@ -24,7 +24,7 @@ pub struct PublicRsaParametersBuilder {
 impl PublicRsaParametersBuilder {
     /// Creates a new [PublicRsaParametersBuilder]
     pub fn new() -> Self {
-        // println!("NEW RSA Builder");
+        debug!("NEW RSA Builder\n");
         PublicRsaParametersBuilder {
             symmetric: None,
             rsa_scheme: None,
@@ -80,7 +80,7 @@ impl PublicRsaParametersBuilder {
 
     /// Adds a [RsaScheme] to the [PublicRsaParametersBuilder].
     pub fn with_scheme(mut self, rsa_scheme: RsaScheme) -> Self {
-        // println!("Debug: entering with_scheme");
+        debug!("Debug: entering with_scheme");
         self.rsa_scheme = Some(rsa_scheme);
         self
     }
