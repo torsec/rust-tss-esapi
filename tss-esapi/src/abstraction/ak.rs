@@ -8,17 +8,18 @@ use crate::{
     handles::{AuthHandle, KeyHandle, SessionHandle},
     interface_types::{
         algorithm::{
-            AsymmetricAlgorithm, EccSchemeAlgorithm, HashingAlgorithm, MldsaSchemeAlgorithm, PublicAlgorithm, RsaSchemeAlgorithm, SignatureSchemeAlgorithm
+            AsymmetricAlgorithm, EccSchemeAlgorithm, HashingAlgorithm, MldsaSchemeAlgorithm, PublicAlgorithm, RsaSchemeAlgorithm, SignatureSchemeAlgorithm, SymmetricAlgorithm
         },
         session_handles::PolicySession,
     },
     structures::{
-        Auth, CreateKeyResult, Digest, DigestList, EccPoint, EccScheme, KeyDerivationFunctionScheme, MldsaScheme, Private, Public, PublicBuilder, PublicEccParametersBuilder, PublicKeyMldsa, PublicKeyRsa, PublicMldsaParameters, PublicMldsaParametersBuilder, PublicRsaParametersBuilder, RsaExponent, RsaScheme, SymmetricDefinitionObject
+        Auth, CreateKeyResult, Digest, DigestList, EccPoint, EccScheme, KeyDerivationFunctionScheme, MldsaScheme, Private, Public, PublicBuilder, PublicEccParametersBuilder, PublicKeyMldsa, PublicKeyRsa, PublicMldsaParameters, PublicMldsaParametersBuilder, PublicRsaParametersBuilder, RsaExponent, RsaScheme, SymmetricCipherParameters, SymmetricDefinitionObject
     },
     Context, Error, Result, WrapperErrorKind,
 };
 use log::error;
 use std::convert::TryFrom;
+use std::mem;
 
 // Source: TCG EK Credential Profile for TPM Family 2.0; Level 0 Version 2.5 Revision 2
 // Section B.6
@@ -60,13 +61,11 @@ fn create_ak_public<IKC: IntoKeyCustomization>(
     sign_alg: SignatureSchemeAlgorithm,
     key_customization: IKC,
 ) -> Result<Public> {
-    // println!("\nI am in create_ak_public\n");
+    debug!("I am in create_ak_public\n");
     let key_customization = key_customization.into_key_customization();
 
-    //println!("I am after key customization\n");
-
-    // println!("{:?}", hash_alg);
-
+    debug!("I am after key customization\n");
+    trace!("{:?}", hash_alg);
     let obj_attrs_builder = ObjectAttributesBuilder::new()
         .with_restricted(true)
         .with_user_with_auth(true)
@@ -82,11 +81,12 @@ fn create_ak_public<IKC: IntoKeyCustomization>(
         obj_attrs_builder
     }
     .build()?;
-    println!("\nArrivato qui");
-    println!("{:?}", key_alg);
-    println!("{:?}", hash_alg);
-    println!("{:?}", sign_alg);
 
+    debug!("\nInto Create ak public");
+    trace!("{:?}", key_alg);
+    trace!("{:?}", hash_alg);
+    trace!("{:?}", sign_alg);
+    trace!("{:?}\n", obj_attrs);
     let key_builder = match key_alg {
         AsymmetricAlgorithmSelection::Rsa(key_bits) => PublicBuilder::new()
             .with_public_algorithm(PublicAlgorithm::Rsa)
@@ -146,21 +146,19 @@ fn create_ak_public<IKC: IntoKeyCustomization>(
             .with_mldsa_unique_identifier(PublicKeyMldsa::default()),
     };
 
-    //println!("{:?}", key_builder);
+    debug!("The Key Builder is: {:?}", key_builder);
 
-    println!("I am HERE folks\n");
     let key_builder = if let Some(ref k) = key_customization {
-        println!("This is ok\n");
+        debug!("Key Customization\n");
         k.template(key_builder)
     } else {
-        println!("This is NOT ok\n");
+        debug!("NO Key Customization\n");
         key_builder
     };
 
-    println!("\n{:?}\n\n", key_builder);
+    debug!("\nNow the Key Builder is: {:?}\n\n", key_builder);
 
-    // println!("Is it here?");
-    // println!("{:?}", AlgorithmIdentifier::from(sign_alg));
+    debug!("{:?}\n", AlgorithmIdentifier::from(sign_alg));
 
     key_builder.build()
 }
@@ -170,11 +168,18 @@ fn session_config(
     context: &mut Context,
     parent: KeyHandle,
 ) -> Result<(HashingAlgorithm, SymmetricDefinitionObject, DigestList)> {
+    debug!("I am in Session_Config function\n");
     let (parent_public, _, _) = context.read_public(parent)?;
+    trace!("Parent_public: {:?}\n", parent_public);
     let parent_hash_alg = parent_public.name_hashing_algorithm();
+    trace!("Parent_hash_alg {:?}\n", parent_hash_alg);
     let parent_symmetric = parent_public
         .symmetric_algorithm()
-        .ok_or_else(|| Error::local_error(WrapperErrorKind::InvalidParam))?;
+        .unwrap_or(SymmetricDefinitionObject::AES_128_CFB);
+    /// Version 1: Here I am not managing the error in the case "symmetric_algorithm" is None
+    /// Version 2: SymmetricDefinitionObject::AES_128_CFB used as "symmetric_algorithm"
+    /// I just want to skip the "session_config" function
+    println!("Try Session Config\n");
 
     let mut policy_digests = DigestList::new();
 
@@ -205,6 +210,7 @@ pub fn load_ak(
     private: Private,
     public: Public,
 ) -> Result<KeyHandle> {
+    debug!("I am in load_ak function\n");
     let (parent_hash_alg, parent_symmetric, policy_digests) = session_config(context, parent)?;
 
     let policy_auth_session = context
@@ -228,6 +234,7 @@ pub fn load_ak(
         session_attributes_mask,
     )?;
 
+    debug!("Middle of load_ak\n");
     let key_handle = context.execute_with_temporary_object(
         SessionHandle::from(policy_auth_session).into(),
         |ctx, _| {
@@ -247,6 +254,10 @@ pub fn load_ak(
                     PolicySession::try_from(policy_auth_session)?,
                     policy_digests,
                 )?
+            }
+
+            if true {
+                trace!("Prova true - KEY_HANDLE\n\nPrint context:\n{:?}\n\nThe size of the ctx variable is: {:?}\n\n", ctx, mem::size_of_val(ctx));
             }
 
             ctx.execute_with_session(Some(policy_auth_session), |ctx| {
@@ -310,14 +321,14 @@ pub fn create_ak_2<IKC: IntoKeyCustomization>(
     ak_auth_value: Option<Auth>,
     key_customization: IKC,
 ) -> Result<CreateKeyResult> {
-    println!("I am HERE Attestation Key\n");
-    println!("Asymmetric Algorithm: {:?}\n", key_alg);
-    println!("Signing key: {:?}\n", sign_alg);
+    debug!("I am in create_ak_2\n");
+    trace!("Asymmetric Algorithm: {:?}\n", key_alg);
+    trace!("Signing key: {:?}\n", sign_alg);
     let ak_pub = create_ak_public(key_alg, hash_alg, sign_alg, key_customization)?;
-    println!("I am HERE\n");
+    debug!("After create_ak_public\n");
     let (parent_hash_alg, parent_symmetric, policy_digests) = session_config(context, parent)?;
 
-    println!("I am HERE\n");
+    debug!("After session_config\n");
     let policy_auth_session = context
         .start_auth_session(
             None,
@@ -329,6 +340,7 @@ pub fn create_ak_2<IKC: IntoKeyCustomization>(
         )?
         .ok_or_else(|| Error::local_error(WrapperErrorKind::WrongValueFromTpm))?;
 
+
     let (session_attributes, session_attributes_mask) = SessionAttributesBuilder::new()
         .with_decrypt(true)
         .with_encrypt(true)
@@ -339,6 +351,7 @@ pub fn create_ak_2<IKC: IntoKeyCustomization>(
         session_attributes_mask,
     )?;
 
+    debug!("Before execute_with_temporary_object create_ak\n\n");
     context.execute_with_temporary_object(
         SessionHandle::from(policy_auth_session).into(),
         |ctx, _| {
@@ -352,6 +365,8 @@ pub fn create_ak_2<IKC: IntoKeyCustomization>(
                     None,
                 )
             })?;
+            debug!("After execute_with_nullauth_session\n\n");
+            trace!("{:?}", policy_digests);
 
             if !policy_digests.is_empty() {
                 ctx.policy_or(
@@ -359,6 +374,7 @@ pub fn create_ak_2<IKC: IntoKeyCustomization>(
                     policy_digests,
                 )?
             };
+            debug!("After is_empty\n\n");
 
             ctx.execute_with_session(Some(policy_auth_session), |ctx| {
                 ctx.create(parent, ak_pub, ak_auth_value, None, None, None)

@@ -9,12 +9,11 @@ use crate::{
         algorithm::{AsymmetricAlgorithm, HashingAlgorithm, PublicAlgorithm},
         ecc::EccCurve,
         key_bits::RsaKeyBits,
+        mldsa::Mldsa,
         resource_handles::{Hierarchy, NvAuth},
     },
     structures::{
-        Digest, EccParameter, EccPoint, EccScheme, KeyDerivationFunctionScheme, Public,
-        PublicBuilder, PublicEccParametersBuilder, PublicKeyRsa, PublicRsaParametersBuilder,
-        RsaExponent, RsaScheme, SymmetricDefinitionObject,
+        Digest, EccParameter, EccPoint, EccScheme, KeyDerivationFunctionScheme, MldsaScheme, Public, PublicBuilder, PublicEccParametersBuilder, PublicKeyMldsa, PublicKeyRsa, PublicMldsaParametersBuilder, PublicRsaParametersBuilder, RsaExponent, RsaScheme, SymmetricDefinitionObject
     },
     Context, Error, Result, WrapperErrorKind,
 };
@@ -31,6 +30,9 @@ const ECC_P521_EK_CERTIFICATE_NV_INDEX: u32 = 0x01c00018;
 const ECC_P256_SM2_EK_CERTIFICATE_NV_INDEX: u32 = 0x01c0001a;
 const RSA_3072_EK_CERTIFICATE_NV_INDEX: u32 = 0x01c0001c;
 const RSA_4096_EK_CERTIFICATE_NV_INDEX: u32 = 0x01c0001e;
+
+// Try to define an index for EK Certifcate NV. MLDSA version
+const MLDSA_87_EK_CERTIFICATE_NV_INDEX: u32 = 0x01c0001f;
 
 // Source: TCG EK Credential Profile for TPM Family 2.0; Level 0 Version 2.5 Revision 2
 // Section B.3 and B.4
@@ -100,7 +102,10 @@ pub fn create_ek_public_from_default_template_2<IKC: IntoKeyCustomization>(
         alg,
         AsymmetricAlgorithmSelection::Rsa(RsaKeyBits::Rsa2048)
             | AsymmetricAlgorithmSelection::Ecc(EccCurve::NistP256)
+            | AsymmetricAlgorithmSelection::Mldsa(Mldsa::Mldsa87)
     );
+
+    debug!("Into create_ek_public_from_default_template_2\n");
 
     let obj_attrs_builder = ObjectAttributesBuilder::new()
         .with_fixed_tpm(true)
@@ -121,6 +126,8 @@ pub fn create_ek_public_from_default_template_2<IKC: IntoKeyCustomization>(
         obj_attrs_builder
     }
     .build()?;
+
+    debug!("{:?}", alg);
 
     let key_builder = match alg {
         AsymmetricAlgorithmSelection::Rsa(key_bits) => {
@@ -209,10 +216,39 @@ pub fn create_ek_public_from_default_template_2<IKC: IntoKeyCustomization>(
                     EccParameter::try_from(vec![0u8; xy_size])?,
                 ))
         }
-        AsymmetricAlgorithmSelection::Mldsa(_) => todo!()
+        AsymmetricAlgorithmSelection::Mldsa(mldsa) => {
+            let (hash_alg, auth_policy, symmetric, unique) = match mldsa {
+                Mldsa::Mldsa87 => (
+                    HashingAlgorithm::Sha256,
+                    Digest::try_from(AUTH_POLICY_A_SHA256.as_slice())?,
+                    SymmetricDefinitionObject::AES_128_CFB, // dont know if correct
+                    PublicKeyMldsa::new_empty_with_size(Mldsa::Mldsa87),
+                ),
+                // Other MLDSA algo are not supported, so return a error
+                _ => return Err(Error::local_error(WrapperErrorKind::UnsupportedParam)),
+            };
+
+            PublicBuilder::new()
+                .with_public_algorithm(PublicAlgorithm::Mldsa)
+                .with_name_hashing_algorithm(hash_alg)
+                .with_object_attributes(obj_attrs)
+                .with_auth_policy(auth_policy)
+                .with_mldsa_parameters(
+                    PublicMldsaParametersBuilder::new()
+                        .with_symmetric(symmetric)
+                        .with_scheme(MldsaScheme::Null)
+                        .with_mlsda(mldsa)
+                        .with_is_signing_key(obj_attrs.sign_encrypt())
+                        .with_is_decryption_key(obj_attrs.decrypt())
+                        .with_restricted(obj_attrs.decrypt())
+                        .build()?,
+                )
+                .with_mldsa_unique_identifier(unique)
+        }
     };
 
-    // println!("Inside create_ek_public_from_default_template_2, where RSA is first called a PublicBuilder\n");
+    debug!("{:?}\n", key_builder);
+    debug!("Inside create_ek_public_from_default_template_2, where RSA is first called a PublicBuilder\n");
 
 
     let key_builder = if let Some(ref k) = key_customization {
@@ -276,6 +312,7 @@ pub fn retrieve_ek_pubcert(
         AsymmetricAlgorithmSelection::Ecc(EccCurve::NistP256) => ECC_P256_EK_CERTIFICATE_NV_INDEX,
         AsymmetricAlgorithmSelection::Ecc(EccCurve::NistP384) => ECC_P384_EK_CERTIFICATE_NV_INDEX,
         AsymmetricAlgorithmSelection::Ecc(EccCurve::NistP521) => ECC_P521_EK_CERTIFICATE_NV_INDEX,
+        AsymmetricAlgorithmSelection::Mldsa(Mldsa::Mldsa87) => MLDSA_87_EK_CERTIFICATE_NV_INDEX,
         AsymmetricAlgorithmSelection::Ecc(EccCurve::Sm2P256) => {
             ECC_P256_SM2_EK_CERTIFICATE_NV_INDEX
         }

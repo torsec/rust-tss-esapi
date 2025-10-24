@@ -60,7 +60,9 @@ impl TryFrom<Public> for SubjectPublicKeyInfo {
                     )),
                     subject_public_key: PublicKey::Ec(BitString::with_bytes(point).into()),
                 })
-            }
+            },
+            // (Public::Mldsa { .. }, DecodedKey
+            // )
             _ => Err(Error::local_error(WrapperErrorKind::UnsupportedParam)),
         }
     }
