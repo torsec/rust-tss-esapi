@@ -88,7 +88,7 @@ impl TryFrom<AsymmetricAlgorithm> for AsymmetricAlgorithmSelection {
         match value {
             AsymmetricAlgorithm::Rsa => Ok(AsymmetricAlgorithmSelection::Rsa(RsaKeyBits::Rsa2048)),
             AsymmetricAlgorithm::Ecc => Ok(AsymmetricAlgorithmSelection::Ecc(EccCurve::NistP256)),
-            AsymmetricAlgorithm::Mldsa => Ok(AsymmetricAlgorithmSelection::Mldsa((Mldsa::Mldsa87))),
+            AsymmetricAlgorithm::Mldsa => Ok(AsymmetricAlgorithmSelection::Mldsa(Mldsa::Mldsa87)),
             AsymmetricAlgorithm::Null => {
                 Err(Error::local_error(WrapperErrorKind::UnsupportedParam))
             }

@@ -18,7 +18,7 @@ use crate::{
     Context, Error, Result, WrapperErrorKind,
 };
 use std::convert::TryFrom;
-use log::{debug};
+use log::debug;
 // Source: TCG EK Credential Profile for TPM Family 2.0; Level 0 Version 2.3 Revision 2
 // Section 2.2.1.4 (Low Range) for Windows compatibility
 const RSA_2048_EK_CERTIFICATE_NV_INDEX: u32 = 0x01c00002;

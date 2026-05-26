@@ -176,9 +176,9 @@ fn session_config(
     let parent_symmetric = parent_public
         .symmetric_algorithm()
         .unwrap_or(SymmetricDefinitionObject::AES_128_CFB);
-    /// Version 1: Here I am not managing the error in the case "symmetric_algorithm" is None
-    /// Version 2: SymmetricDefinitionObject::AES_128_CFB used as "symmetric_algorithm"
-    /// I just want to skip the "session_config" function
+    // Version 1: Here I am not managing the error in the case "symmetric_algorithm" is None
+    // Version 2: SymmetricDefinitionObject::AES_128_CFB used as "symmetric_algorithm"
+    // I just want to skip the "session_config" function
     println!("Try Session Config\n");
 
     let mut policy_digests = DigestList::new();
@@ -257,7 +257,7 @@ pub fn load_ak(
             }
 
             if true {
-                trace!("Prova true - KEY_HANDLE\n\nPrint context:\n{:?}\n\nThe size of the ctx variable is: {:?}\n\n", ctx, mem::size_of_val(ctx));
+                trace!("Prova true - KEY_HANDLE\n\nPrint context:\n{:?}\n\nThe size of the ctx variable is: {:?}\n\n", ctx, size_of_val(ctx));
             }
 
             ctx.execute_with_session(Some(policy_auth_session), |ctx| {

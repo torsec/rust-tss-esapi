@@ -122,7 +122,7 @@ impl Context {
         let mut object_handle = ObjectHandle::None.into();
 
         debug!("I am in Load (object_commands.rs)\n");
-        debug!("The size of the ctx variable is: {:?}\n",mem::size_of_val(self));
+        debug!("The size of the ctx variable is: {:?}\n",size_of_val(self));
 
         let ret = unsafe {
             Esys_Load(
