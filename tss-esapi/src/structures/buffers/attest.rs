@@ -5,7 +5,7 @@ use crate::{
     structures::Attest, traits::UnMarshall, tss2_esys::TPM2B_ATTEST, Error, Result,
     WrapperErrorKind,
 };
-use log::error;
+use log::{error, info};
 use std::{convert::TryFrom, ops::Deref};
 use zeroize::Zeroizing;
 
@@ -69,6 +69,7 @@ impl TryFrom<TPM2B_ATTEST> for AttestBuffer {
 
     fn try_from(tss: TPM2B_ATTEST) -> Result<Self> {
         let size = tss.size as usize;
+        info!("(/structures/buffers/attest.rs) Trying to convert TPM2B_ATTEST to AttestBuffer with size {}", size);
         if size > Self::MAX_SIZE {
             error!("Invalid buffer size(> {})", Self::MAX_SIZE);
             return Err(Error::local_error(WrapperErrorKind::WrongParamSize));

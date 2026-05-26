@@ -69,7 +69,7 @@ impl Context {
         let mut creation_hash_ptr = null_mut();
         let mut creation_ticket_ptr = null_mut();
 
-        debug!("I am in Create (object_commands.rs)\n\n");
+        debug!("I am in Create (object_commands.rs)\n");
 
         let ret = unsafe {
             Esys_Create(
@@ -89,7 +89,7 @@ impl Context {
                 &mut creation_ticket_ptr,
             )
         };
-        debug!("Before possible TSS error code (Create)\n");
+        debug!("Before possible TSS error code (Create)");
         let ret = Error::from_tss_rc(ret);
         debug!("After possible TSS error code(Create)\n");
 
@@ -121,7 +121,7 @@ impl Context {
     ) -> Result<KeyHandle> {
         let mut object_handle = ObjectHandle::None.into();
 
-        debug!("I am in Load (object_commands.rs)\n");
+        debug!("I am in Load (object_commands.rs)");
         debug!("The size of the ctx variable is: {:?}\n",size_of_val(self));
 
         let ret = unsafe {
@@ -136,7 +136,7 @@ impl Context {
                 &mut object_handle,
             )
         };
-        debug!("Before possible TSS error code (Load)\n");
+        debug!("Before possible TSS error code (Load)");
         let ret = Error::from_tss_rc(ret);
         debug!("Before possible TSS error code (Load)\n");
 

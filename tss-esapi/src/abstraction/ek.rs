@@ -18,7 +18,7 @@ use crate::{
     Context, Error, Result, WrapperErrorKind,
 };
 use std::convert::TryFrom;
-use log::debug;
+use log::{debug, trace};
 // Source: TCG EK Credential Profile for TPM Family 2.0; Level 0 Version 2.3 Revision 2
 // Section 2.2.1.4 (Low Range) for Windows compatibility
 const RSA_2048_EK_CERTIFICATE_NV_INDEX: u32 = 0x01c00002;
@@ -106,7 +106,7 @@ pub fn create_ek_public_from_default_template_2<IKC: IntoKeyCustomization>(
             | AsymmetricAlgorithmSelection::Mldsa(Mldsa::Mldsa87)
     );
 
-    debug!("Into create_ek_public_from_default_template_2\n");
+    debug!("Into create_ek_public_from_default_template_2");
 
     let obj_attrs_builder = ObjectAttributesBuilder::new()
         .with_fixed_tpm(true)
@@ -128,7 +128,7 @@ pub fn create_ek_public_from_default_template_2<IKC: IntoKeyCustomization>(
     }
     .build()?;
 
-    debug!("{:?}", alg);
+    debug!("The algortihm is (AsymmetricAlgorithmSelection): {:?}\n", alg);
 
     let key_builder = match alg {
         AsymmetricAlgorithmSelection::Rsa(key_bits) => {
@@ -248,8 +248,8 @@ pub fn create_ek_public_from_default_template_2<IKC: IntoKeyCustomization>(
         }
     };
 
-    debug!("{:?}\n", key_builder);
-    debug!("Inside create_ek_public_from_default_template_2, where RSA is first called a PublicBuilder\n");
+    trace!("Printing the key_builder ...\n {:?}\n", key_builder);
+    debug!("Inside create_ek_public_from_default_template_2, where RSA is first called a PublicBuilder");
 
 
     let key_builder = if let Some(ref k) = key_customization {
@@ -293,7 +293,7 @@ pub fn create_ek_object_2<IKC: IntoKeyCustomization>(
     key_customization: IKC,
 ) -> Result<KeyHandle> {
     let ek_public = create_ek_public_from_default_template_2(alg, key_customization)?;
-
+    debug!("I am in create_ek_object_2");
     Ok(context
         .execute_with_nullauth_session(|ctx| {
             ctx.create_primary(Hierarchy::Endorsement, ek_public, None, None, None, None)
@@ -319,14 +319,17 @@ pub fn retrieve_ek_pubcert(
         }
         _ => return Err(Error::local_error(WrapperErrorKind::UnsupportedParam)),
     };
+    debug!("Retrieve ek pubcert 1");
 
     let nv_idx = NvIndexTpmHandle::new(nv_idx).unwrap();
-
+    debug!("Retrieve ek pubcert 2");
     let nv_auth_handle = TpmHandle::NvIndex(nv_idx);
+    debug!("Retrieve ek pubcert 3");
     let nv_auth_handle = context.execute_without_session(|ctx| {
         ctx.tr_from_tpm_public(nv_auth_handle)
             .map(|v| NvAuth::NvIndex(v.into()))
     })?;
+    debug!("Retrieve ek pubcert 4");
 
     context.execute_with_nullauth_session(|ctx| nv::read_full(ctx, nv_auth_handle, nv_idx))
 }

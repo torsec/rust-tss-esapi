@@ -56,7 +56,9 @@ impl Context {
                 &mut object,
             )
         };
+        println!("The error code is: {}", ret);
         let ret = Error::from_tss_rc(ret);
+
         if ret.is_success() {
             self.handle_manager.add_handle(
                 object.into(),

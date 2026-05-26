@@ -7,7 +7,7 @@ use crate::{
     tss2_esys::{TPM2B_PUBLIC, TPMT_PUBLIC},
     Error, Result, WrapperErrorKind,
 };
-use log::error;
+use log::{error, info};
 use std::{
     convert::{TryFrom, TryInto},
     mem::size_of,
@@ -79,6 +79,7 @@ impl TryFrom<TPM2B_PUBLIC> for PublicBuffer {
 
     fn try_from(tss: TPM2B_PUBLIC) -> Result<Self> {
         let size = tss.size as usize;
+        info!("(/structures/buffers/public.rs) Trying to convert TPM2B_PUBLIC to PublicBuffer with size {}", size);
         if size > Self::MAX_SIZE {
             error!("Error: Invalid buffer size ({} > {})", size, Self::MAX_SIZE);
             return Err(Error::local_error(WrapperErrorKind::WrongParamSize));

@@ -7,6 +7,8 @@ macro_rules! named_field_buffer_type {
         use crate::tss2_esys::$tss_type;
         use crate::{Error, Result, WrapperErrorKind};
         use log::error;
+        use log::info;
+        use log::debug;
         use std::convert::TryFrom;
         use std::ops::Deref;
         use zeroize::Zeroizing;
@@ -64,6 +66,9 @@ macro_rules! named_field_buffer_type {
 
             fn try_from(tss: $tss_type) -> Result<Self> {
                 let size = tss.size as usize;
+                debug!("The TSS to debug is: {:?}", tss);
+                info!("(/structures/buffers.rs) Trying to convert {} to {} with size {}", stringify!($tss_type), stringify!($native_type), size);
+                info!("The max size for {} is {}", stringify!($native_type), Self::MAX_SIZE);
                 if size > Self::MAX_SIZE {
                     error!("Invalid buffer size(> {})", Self::MAX_SIZE);
                     return Err(Error::local_error(WrapperErrorKind::WrongParamSize));
@@ -364,6 +369,8 @@ pub mod public_key_rsa {
 }
 
 pub mod public_key_mldsa {
+
+
     use crate::{interface_types::mldsa::Mldsa, tss2_esys::TPM2_MLDSA_PUBLIC_KEY_BYTES};
     const TPM2B_PUBLIC_KEY_MLDSA_BUFFER_SIZE: usize = TPM2_MLDSA_PUBLIC_KEY_BYTES as usize;
     buffer_type!(
@@ -384,12 +391,46 @@ pub mod public_key_mldsa {
         type Error = Error;
 
         fn try_from(public_key_mldsa: PublicKeyMldsa) -> Result<Self> {
+            info!("Prova a convertire PublicKeyMldsa to [u8; 2592] with size {}", public_key_mldsa.value().len());
             if public_key_mldsa.value().len() > 2592 {
                 return Err(Error::local_error(WrapperErrorKind::WrongParamSize));
             }
 
             let mut value = [0u8; 2592];
             value.copy_from_slice(public_key_mldsa.value());
+            Ok(value)
+        }
+    }
+}
+
+pub mod signature_mldsa {
+    use crate::{interface_types::mldsa::Mldsa, tss2_esys::TPM2_MLDSA_SIGNATURE_BYTES};
+    const TPM2B_SIGNATURE_MLDSA_BUFFER_SIZE: usize = TPM2_MLDSA_SIGNATURE_BYTES as usize;
+    buffer_type!(
+        SignatureMldsa,
+        TPM2B_SIGNATURE_MLDSA_BUFFER_SIZE,
+        TPM2B_SIGNATURE_MLDSA
+    );
+
+    impl SignatureMldsa {
+        pub fn new_empty_with_size(mldsa_key_bytes: Mldsa) -> Self {
+            match mldsa_key_bytes {
+                Mldsa::Mldsa87 => SignatureMldsa(vec![0u8; 4627].into()),
+            }
+        }
+    }
+
+    impl TryFrom<SignatureMldsa> for [u8; 4627] {
+        type Error = Error;
+
+        fn try_from(signature_mldsa: SignatureMldsa) -> Result<Self> {
+            info!("Prova a convertire SignatureMldsa to [u8; 4627] with size {}", signature_mldsa.value().len());
+            if signature_mldsa.value().len() > 4627 {
+                return Err(Error::local_error(WrapperErrorKind::WrongParamSize));
+            }
+
+            let mut value = [0u8; 4627];
+            value.copy_from_slice(signature_mldsa.value());
             Ok(value)
         }
     }

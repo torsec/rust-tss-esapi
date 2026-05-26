@@ -168,6 +168,14 @@ impl Context {
     ) -> Result<(Attest, Signature)> {
         let mut quoted_ptr = null_mut();
         let mut signature_ptr = null_mut();
+        println!("\n\nARIVVO NELLA QUOTE DEL TSS-ESAPI???\n\n");
+        
+        println!("The self parameter is {:?}\n", self);
+        println!("The qualifying data is: {:?}\n", qualifying_data);
+        println!("The signing scheme is: {:?}\n", signing_scheme);
+        println!("The pcr selection list is: {:?}\n", pcr_selection_list);
+
+ 
         let ret = unsafe {
             Esys_Quote(
                 self.mut_context(),
@@ -183,10 +191,15 @@ impl Context {
             )
         };
         let ret = Error::from_tss_rc(ret);
+        println!("\n\nSONO USCITO DALLA QUOTE DEL TSS-ESAPI???\n\n");
+
+        println!("The return code is: {:?}\n", ret);
 
         if ret.is_success() {
             let quoted = Context::ffi_data_to_owned(quoted_ptr);
             let signature = Context::ffi_data_to_owned(signature_ptr);
+            println!("Arrivo con SUCESSO ???\n");
+            println!("The quoted data is: {:?}\n", quoted);
             Ok((
                 Attest::try_from(AttestBuffer::try_from(quoted)?)?,
                 Signature::try_from(signature)?,

@@ -96,8 +96,7 @@ impl RsaScheme {
         rsa_scheme_algorithm: RsaSchemeAlgorithm,
         hashing_algorithm: Option<HashingAlgorithm>,
     ) -> Result<RsaScheme> {
-        println!("\nQUI\n");
-        println!("{:?}", rsa_scheme_algorithm);
+        debug!("QUI. rsa_scheme_algorithm: {:?}", rsa_scheme_algorithm);
         match rsa_scheme_algorithm {
             RsaSchemeAlgorithm::RsaSsa => Ok(RsaScheme::RsaSsa(HashScheme::new(
                 hashing_algorithm.ok_or_else(|| {

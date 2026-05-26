@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 use crate::{
     interface_types::algorithm::SignatureSchemeAlgorithm,
-    structures::{EccSignature, HashAgile, RsaSignature},
+    structures::{EccSignature, HashAgile, RsaSignature, MldsaSignature},
     traits::{Marshall, UnMarshall},
     tss2_esys::{TPMT_SIGNATURE, TPMU_SIGNATURE},
     Error, Result, WrapperErrorKind,
@@ -27,6 +27,7 @@ pub enum Signature {
     Sm2(EccSignature),
     EcSchnorr(EccSignature),
     Hmac(HashAgile),
+    Mldsa(MldsaSignature),
     Null,
 }
 
@@ -40,6 +41,7 @@ impl Signature {
             Signature::Sm2(_) => SignatureSchemeAlgorithm::Sm2,
             Signature::EcSchnorr(_) => SignatureSchemeAlgorithm::EcSchnorr,
             Signature::Hmac(_) => SignatureSchemeAlgorithm::Hmac,
+            &Signature::Mldsa(_) => SignatureSchemeAlgorithm::Mldsa,
             Signature::Null => SignatureSchemeAlgorithm::Null,
         }
     }
@@ -93,6 +95,12 @@ impl TryFrom<Signature> for TPMT_SIGNATURE {
                     hmac: hash_agile.try_into()?,
                 },
             }),
+            Signature::Mldsa(mldsa_signature) => Ok(TPMT_SIGNATURE {
+                sigAlg: signature_algorithm,
+                signature: TPMU_SIGNATURE {
+                    mldsa: mldsa_signature.into(),
+                }
+            }),
             Signature::Null => Ok(TPMT_SIGNATURE {
                 sigAlg: signature_algorithm,
                 signature: Default::default(),
@@ -127,7 +135,9 @@ impl TryFrom<TPMT_SIGNATURE> for Signature {
             SignatureSchemeAlgorithm::Hmac => Ok(Signature::Hmac(
                 unsafe { tpmt_signature.signature.hmac }.try_into()?,
             )),
-            SignatureSchemeAlgorithm::Mldsa => todo!(),
+            SignatureSchemeAlgorithm::Mldsa => Ok(Signature::Mldsa(
+                unsafe { tpmt_signature.signature.mldsa }.try_into()?,
+            )),
             SignatureSchemeAlgorithm::Null => Ok(Signature::Null),
         }
     }

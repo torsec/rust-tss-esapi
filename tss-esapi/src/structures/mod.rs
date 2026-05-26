@@ -40,7 +40,7 @@ pub use self::buffers::{
     private_key_rsa::PrivateKeyRsa, private_vendor_specific::PrivateVendorSpecific,
     public::PublicBuffer, public_key_rsa::PublicKeyRsa, sensitive::SensitiveBuffer,
     sensitive_data::SensitiveData, symmetric_key::SymmetricKey, timeout::Timeout,
-    public_key_mldsa::PublicKeyMldsa,
+    public_key_mldsa::PublicKeyMldsa, signature_mldsa::SignatureMldsa,
 };
 // ///////////////////////////////////////////////////////
 // The creation section
@@ -177,7 +177,7 @@ pub use ecc::point::EccPoint;
 // Signatures structures
 // ///////////////////////////////////////////////////////
 mod signatures;
-pub use signatures::{EccSignature, RsaSignature};
+pub use signatures::{EccSignature, RsaSignature, MldsaSignature};
 // ///////////////////////////////////////////////////////
 // Attestation Structures
 // ///////////////////////////////////////////////////////

@@ -21,7 +21,7 @@ use keyed_hash::PublicKeyedHashParameters;
 use rsa::PublicRsaParameters;
 use mldsa::PublicMldsaParameters;
 
-use log::{error, debug};
+use log::{error, debug, trace};
 use std::{
     convert::{TryFrom, TryInto},
     mem::size_of,
@@ -55,7 +55,7 @@ impl PublicBuilder {
     /// associated with other algorithms then the provided public algorithm
     /// will be ignored.
     pub fn new() -> Self {
-        debug!("NEW Public Builder\n");
+        debug!("NEW Public Builder");
         PublicBuilder {
             public_algorithm: None,
             object_attributes: None,
@@ -77,11 +77,11 @@ impl PublicBuilder {
     /// Adds the public algorithm for the [Public] structure
     /// to the builder.
     pub fn with_public_algorithm(mut self, public_algorithm: PublicAlgorithm) -> Self {
-        debug!("Debug: entering with_public_algorithm: {:?}\n", public_algorithm);
+        debug!("Entering with_public_algorithm: {:?}", public_algorithm);
         self.public_algorithm = Some(public_algorithm);
         match public_algorithm {
-            PublicAlgorithm::Mldsa => {debug!("With Public Algorithm: {:?}\n", self);},
-            _ => {debug!("Go ahead\n")}
+            PublicAlgorithm::Mldsa => {trace!("With Public Algorithm: {:?}", self);},
+            _ => {debug!("Go ahead")}
         };
         self
     }
@@ -90,7 +90,7 @@ impl PublicBuilder {
     /// to the builder
     pub fn with_object_attributes(mut self, object_attributes: ObjectAttributes) -> Self {
         self.object_attributes = Some(object_attributes);
-        debug!("Debug: entering with_object_attributes");
+        debug!("Entering with_object_attributes");
         self
     }
 
@@ -100,9 +100,8 @@ impl PublicBuilder {
         mut self,
         name_hashing_algorithm: HashingAlgorithm,
     ) -> Self {
-        debug!("Debug: entering name_hashing_algorithm");
+        debug!("Entering name_hashing_algorithm");
         self.name_hashing_algorithm = Some(name_hashing_algorithm);
-        // println!("Debug: entering name_hashing_algorithm");
         self
     }
 
@@ -120,7 +119,7 @@ impl PublicBuilder {
     /// This is required if the public algorithm is set to
     /// [Rsa][`crate::interface_types::algorithm::PublicAlgorithm::Rsa].
     pub fn with_rsa_parameters(mut self, rsa_parameters: PublicRsaParameters) -> Self {
-        debug!("Debug: entering with_rsa_parameters");
+        debug!("Entering with_rsa_parameters");
         self.rsa_parameters = Some(rsa_parameters);
         self
     }
@@ -134,7 +133,7 @@ impl PublicBuilder {
     ///
     /// The unique identifier is the public key.
     pub fn with_rsa_unique_identifier(mut self, rsa_unique_identifier: PublicKeyRsa) -> Self {
-        debug!("Debug: entering with_rsa_unique_identifier{:?}", rsa_unique_identifier);
+        debug!("Entering with_rsa_unique_identifier: {:?}", rsa_unique_identifier);
         self.rsa_unique_identifier = Some(rsa_unique_identifier);
         self
     }
@@ -200,7 +199,7 @@ impl PublicBuilder {
     /// This is required if the public algorithm is set to
     /// [Mldsa][]
     pub fn with_mldsa_parameters(mut self, mldsa_parameters: PublicMldsaParameters) -> Self{
-        debug!("Debug: entering with_mldsa_parameters\n");
+        debug!("Entering with_mldsa_parameters");
         self.mldsa_parameters = Some(mldsa_parameters);
         self
     }

@@ -61,10 +61,10 @@ fn create_ak_public<IKC: IntoKeyCustomization>(
     sign_alg: SignatureSchemeAlgorithm,
     key_customization: IKC,
 ) -> Result<Public> {
-    debug!("I am in create_ak_public\n");
+    debug!("I am in create_ak_public");
     let key_customization = key_customization.into_key_customization();
 
-    debug!("I am after key customization\n");
+    debug!("I am after key customization");
     trace!("{:?}", hash_alg);
     let obj_attrs_builder = ObjectAttributesBuilder::new()
         .with_restricted(true)
@@ -82,7 +82,7 @@ fn create_ak_public<IKC: IntoKeyCustomization>(
     }
     .build()?;
 
-    debug!("\nInto Create ak public");
+    debug!("Into Create ak public\n");
     trace!("{:?}", key_alg);
     trace!("{:?}", hash_alg);
     trace!("{:?}", sign_alg);
@@ -146,19 +146,19 @@ fn create_ak_public<IKC: IntoKeyCustomization>(
             .with_mldsa_unique_identifier(PublicKeyMldsa::default()),
     };
 
-    debug!("The Key Builder is: {:?}", key_builder);
+    trace!("The Key Builder is:\n{:?}", key_builder);
 
     let key_builder = if let Some(ref k) = key_customization {
-        debug!("Key Customization\n");
+        debug!("Key Customization");
         k.template(key_builder)
     } else {
-        debug!("NO Key Customization\n");
+        debug!("NO Key Customization");
         key_builder
     };
 
-    debug!("\nNow the Key Builder is: {:?}\n\n", key_builder);
+    trace!("Now the Key Builder is:\n{:?}", key_builder);
 
-    debug!("{:?}\n", AlgorithmIdentifier::from(sign_alg));
+    debug!("The signature algorithm is: {:?}", AlgorithmIdentifier::from(sign_alg));
 
     key_builder.build()
 }
@@ -168,7 +168,7 @@ fn session_config(
     context: &mut Context,
     parent: KeyHandle,
 ) -> Result<(HashingAlgorithm, SymmetricDefinitionObject, DigestList)> {
-    debug!("I am in Session_Config function\n");
+    debug!("I am in Session_Config function");
     let (parent_public, _, _) = context.read_public(parent)?;
     trace!("Parent_public: {:?}\n", parent_public);
     let parent_hash_alg = parent_public.name_hashing_algorithm();
@@ -210,7 +210,7 @@ pub fn load_ak(
     private: Private,
     public: Public,
 ) -> Result<KeyHandle> {
-    debug!("I am in load_ak function\n");
+    debug!("I am in load_ak function");
     let (parent_hash_alg, parent_symmetric, policy_digests) = session_config(context, parent)?;
 
     let policy_auth_session = context
@@ -234,7 +234,7 @@ pub fn load_ak(
         session_attributes_mask,
     )?;
 
-    debug!("Middle of load_ak\n");
+    debug!("Middle of load_ak");
     let key_handle = context.execute_with_temporary_object(
         SessionHandle::from(policy_auth_session).into(),
         |ctx, _| {
@@ -321,14 +321,14 @@ pub fn create_ak_2<IKC: IntoKeyCustomization>(
     ak_auth_value: Option<Auth>,
     key_customization: IKC,
 ) -> Result<CreateKeyResult> {
-    debug!("I am in create_ak_2\n");
-    trace!("Asymmetric Algorithm: {:?}\n", key_alg);
-    trace!("Signing key: {:?}\n", sign_alg);
+    debug!("I am in create_ak_2");
+    trace!("Asymmetric Algorithm: {:?}", key_alg);
+    trace!("Signing algorithm: {:?}", sign_alg);
     let ak_pub = create_ak_public(key_alg, hash_alg, sign_alg, key_customization)?;
-    debug!("After create_ak_public\n");
+    debug!("After create_ak_public");
     let (parent_hash_alg, parent_symmetric, policy_digests) = session_config(context, parent)?;
 
-    debug!("After session_config\n");
+    debug!("After session_config");
     let policy_auth_session = context
         .start_auth_session(
             None,
@@ -351,7 +351,7 @@ pub fn create_ak_2<IKC: IntoKeyCustomization>(
         session_attributes_mask,
     )?;
 
-    debug!("Before execute_with_temporary_object create_ak\n\n");
+    debug!("Before execute_with_temporary_object create_ak");
     context.execute_with_temporary_object(
         SessionHandle::from(policy_auth_session).into(),
         |ctx, _| {
@@ -365,7 +365,7 @@ pub fn create_ak_2<IKC: IntoKeyCustomization>(
                     None,
                 )
             })?;
-            debug!("After execute_with_nullauth_session\n\n");
+            debug!("After execute_with_nullauth_session");
             trace!("{:?}", policy_digests);
 
             if !policy_digests.is_empty() {
@@ -374,7 +374,7 @@ pub fn create_ak_2<IKC: IntoKeyCustomization>(
                     policy_digests,
                 )?
             };
-            debug!("After is_empty\n\n");
+            debug!("After is_empty");
 
             ctx.execute_with_session(Some(policy_auth_session), |ctx| {
                 ctx.create(parent, ak_pub, ak_auth_value, None, None, None)

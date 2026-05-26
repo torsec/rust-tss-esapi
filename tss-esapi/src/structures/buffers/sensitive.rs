@@ -6,7 +6,7 @@ use crate::{
     tss2_esys::{TPM2B_SENSITIVE, TPMT_SENSITIVE},
     Error, Result, WrapperErrorKind,
 };
-use log::error;
+use log::{error, info};
 use std::{
     convert::{TryFrom, TryInto},
     mem::size_of,
@@ -77,6 +77,7 @@ impl TryFrom<TPM2B_SENSITIVE> for SensitiveBuffer {
 
     fn try_from(tss: TPM2B_SENSITIVE) -> Result<Self> {
         let size = tss.size as usize;
+        info!("(/structures/buffers/sensitive.rs) Trying to convert TPM2B_SENSITIVE to SensitiveBuffer with size {}", size);
         if size > Self::MAX_SIZE {
             error!("Error: Invalid buffer size ({} > {})", size, Self::MAX_SIZE);
             return Err(Error::local_error(WrapperErrorKind::WrongParamSize));

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 use crate::{
     interface_types::algorithm::HashingAlgorithm,
-    structures::{EccParameter, PublicKeyRsa},
-    tss2_esys::{TPMS_SIGNATURE_ECC, TPMS_SIGNATURE_RSA},
+    structures::{EccParameter, PublicKeyRsa, PublicKeyMldsa, SignatureMldsa},
+    tss2_esys::{TPMS_SIGNATURE_ECC, TPMS_SIGNATURE_RSA, TPMS_SIGNATURE_MLDSA},
     Error, Result, WrapperErrorKind,
 };
 use log::error;
@@ -71,6 +71,68 @@ impl TryFrom<TPMS_SIGNATURE_RSA> for RsaSignature {
         })
     }
 }
+
+/// MLDSA case (similar to RSA signature)
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MldsaSignature {
+    hashing_algorithm: HashingAlgorithm,
+    signature: SignatureMldsa,
+}
+
+impl MldsaSignature {
+    /// Creates new MLDSA signature
+    ///
+    /// # Errors
+    /// Using [Null][`HashingAlgorithm::Null`] will cause an error.
+    pub fn create(hashing_algorithm: HashingAlgorithm, signature: SignatureMldsa) -> Result<Self> {
+        if hashing_algorithm == HashingAlgorithm::Null {
+            error!("Hashing algorithm Null is not allowed in MldsaSignature");
+            return Err(Error::local_error(WrapperErrorKind::InvalidParam));
+        }
+        Ok(MldsaSignature {
+            hashing_algorithm,
+            signature,
+        })
+    }
+
+    /// Returns the hashig algorithm
+    pub const fn hashing_algorithm(&self) -> HashingAlgorithm {
+        self.hashing_algorithm
+    }
+
+    /// Returns the signature
+    pub const fn signature(&self) -> &SignatureMldsa {
+        &self.signature
+    }
+}
+
+impl From<MldsaSignature> for TPMS_SIGNATURE_MLDSA {
+    fn from(mldsa_signature: MldsaSignature) -> Self {
+        TPMS_SIGNATURE_MLDSA {
+            hash: mldsa_signature.hashing_algorithm.into(),
+            sig: mldsa_signature.signature.into(),
+        }
+    }
+}
+
+impl TryFrom<TPMS_SIGNATURE_MLDSA> for MldsaSignature {
+    type Error = Error;
+
+    fn try_from(tpms_signature_mldsa: TPMS_SIGNATURE_MLDSA) -> Result<Self> {
+        let hashing_algorithm = tpms_signature_mldsa.hash.try_into()?;
+        if hashing_algorithm == HashingAlgorithm::Null {
+            error!("Received invalid hashing algorithm Null from the tpm in the MLDSA signature.");
+            return Err(Error::local_error(WrapperErrorKind::WrongValueFromTpm));
+        }
+
+        Ok(MldsaSignature {
+            hashing_algorithm,
+            signature: tpms_signature_mldsa.sig.try_into()?,
+        })
+    }
+}
+
+
 
 /// Type holding ECC signature information.
 ///
