@@ -155,11 +155,11 @@ impl PublicMldsaParametersBuilder {
             }
         }
 
-        let symmetric_definition_object = self.symmetric.unwrap_or(SymmetricDefinitionObject::Null);
+        // let symmetric_definition_object = self.symmetric.unwrap_or(SymmetricDefinitionObject::Null);
         // Other checks that seemed related just to rsa not included
 
         Ok(PublicMldsaParameters { 
-            symmetric_definition_object, 
+            // symmetric_definition_object, 
             mldsa_scheme, 
             // mldsa, 
         })
@@ -174,7 +174,7 @@ impl PublicMldsaParametersBuilder {
 /// These mldsa parameters are specific to the [`crate::structures::Public`] type.
 #[derive(Clone, Debug, Copy, PartialEq, Eq)]
 pub struct PublicMldsaParameters {
-    symmetric_definition_object: SymmetricDefinitionObject,
+    // symmetric_definition_object: SymmetricDefinitionObject,
     mldsa_scheme: MldsaScheme,
     // mldsa: Mldsa,
 }
@@ -182,12 +182,12 @@ pub struct PublicMldsaParameters {
 impl PublicMldsaParameters {
     /// Function for creating new [PublicMldsaParameters] structure
     pub const fn new(
-        symmetric_definition_object: SymmetricDefinitionObject,
+        // symmetric_definition_object: SymmetricDefinitionObject,
         mldsa_scheme: MldsaScheme,
         // mldsa: Mldsa,
     ) -> Self {
         PublicMldsaParameters { 
-            symmetric_definition_object, 
+            // symmetric_definition_object, 
             mldsa_scheme, 
             // mldsa, 
         }
@@ -217,7 +217,8 @@ impl PublicMldsaParameters {
 impl From<PublicMldsaParameters> for TPMS_MLDSA_PARMS {
     fn from(public_mldsa_parameters: PublicMldsaParameters) -> Self {
         TPMS_MLDSA_PARMS {
-            symmetric: public_mldsa_parameters.symmetric_definition_object.into(),
+            symmetric: SymmetricDefinitionObject::Null.into(),
+            // symmetric: public_mldsa_parameters.symmetric_definition_object.into(),
             scheme: public_mldsa_parameters.mldsa_scheme.into(),
             // mldsa: public_mldsa_parameters.mldsa.into(),
         }
@@ -229,7 +230,7 @@ impl TryFrom<TPMS_MLDSA_PARMS> for PublicMldsaParameters {
 
     fn try_from(tpms_mldsa_parms: TPMS_MLDSA_PARMS) -> Result<Self> {
         Ok(PublicMldsaParameters {
-            symmetric_definition_object: tpms_mldsa_parms.symmetric.try_into()?,
+            // symmetric_definition_object: tpms_mldsa_parms.symmetric.try_into()?,
             mldsa_scheme: tpms_mldsa_parms.scheme.try_into()?,
             // mldsa: tpms_mldsa_parms.mldsa.try_into()?,
         })

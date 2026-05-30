@@ -293,7 +293,7 @@ pub fn create_ek_object_2<IKC: IntoKeyCustomization>(
     key_customization: IKC,
 ) -> Result<KeyHandle> {
     let ek_public = create_ek_public_from_default_template_2(alg, key_customization)?;
-    debug!("I am in create_ek_object_2");
+    debug!("I am in create_ek_object_2. Progetto Clonato da GIT !!");
     Ok(context
         .execute_with_nullauth_session(|ctx| {
             ctx.create_primary(Hierarchy::Endorsement, ek_public, None, None, None, None)

@@ -302,10 +302,14 @@ impl Context {
             .build();
         self.tr_sess_set_attributes(auth_session, session_attributes, session_attributes_mask)?;
 
+        debug!("Before execute_with_session\n");    // f is the funcion called
         let res = self.execute_with_session(Some(auth_session), f);
+        debug!("After execute_with_session\n");
+
 
         self.flush_context(SessionHandle::from(auth_session).into())?;
 
+        debug!("At the end of execute_with_nullauth_session\n");
         res
     }
 

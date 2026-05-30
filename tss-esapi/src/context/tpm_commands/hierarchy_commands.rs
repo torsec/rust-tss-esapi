@@ -56,6 +56,7 @@ impl Context {
         let mut creation_ticket_ptr = null_mut();
         let mut object_handle = ObjectHandle::None.into();
 
+        println!("ARRIVO QUIIIIII???\n\n");
         let ret = unsafe {
             Esys_CreatePrimary(
                 self.mut_context(),
@@ -75,6 +76,7 @@ impl Context {
             )
         };
         let ret = Error::from_tss_rc(ret);
+        println!("ARRIVO dopo chiamata di Esys_CreatePrimary???\n\n");
 
         if ret.is_success() {
             let out_public_owned = Context::ffi_data_to_owned(out_public_ptr);
@@ -84,6 +86,8 @@ impl Context {
             let primary_key_handle = KeyHandle::from(object_handle);
             self.handle_manager
                 .add_handle(primary_key_handle.into(), HandleDropAction::Flush)?;
+
+            println!("Sono nell'if di create_primary, prima di return ??\n\n");
 
             Ok(CreatePrimaryKeyResult {
                 key_handle: primary_key_handle,
